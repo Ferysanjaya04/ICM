@@ -273,6 +273,31 @@
 | 0.2   | Minggu 2 | Fery (AI) + Jojo | Update Feature 2 setelah PoC lengkap |
 
 ---
+sequenceDiagram
+    participant Client
+    participant FastAPI as FastAPI Backend
+    participant AI as AI Engine (SentenceTransformer)
+    participant DB as Database (PostgreSQL)
+
+    Client->>FastAPI: POST /api/v1/match-job (cv_file, job_file)
+    FastAPI->>FastAPI: Validasi file (PDF, <10MB)
+    FastAPI->>AI: extract_text(cv_file) → text_cv
+    FastAPI->>AI: extract_text(job_file) → text_job
+    FastAPI->>AI: encode(text_cv) → emb_cv
+    FastAPI->>AI: encode(text_job) → emb_job
+    FastAPI->>AI: cosine_similarity(emb_cv, emb_job) → semantic_score
+    FastAPI->>AI: extract_skills(text_cv, text_job) → matched/missing
+    FastAPI->>FastAPI: hitung experience & education score
+    FastAPI->>FastAPI: weighted_sum → compatibility_score
+    FastAPI->>DB: simpan riwayat analisis (opsional)
+    FastAPI-->>Client: JSON Response (spec di atas)
+
+
+> Catatan:
+> - Model embedding di-load sekali saat startup (lifespan FastAPI).
+> - PDF parsing & inference berat bisa dipindah ke BackgroundTasks / Celery nanti (Fase 2).
+> - Feature 2 (/api/v1/analyze-cv) alurnya sama, hanya tanpa job_file dan tambah role-classifier step.
+
 
 > **File ini adalah kontrak desain (Design Contract).**  
 > Setiap perubahan breaking-change pada field/structure wajib update versi & diskusi tim terlebih dahulu.
