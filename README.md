@@ -49,7 +49,7 @@ it-career-cv-analyzer/
 Dataset yang Digunakan
 
 * **`job_roles.csv`**: Basis pengetahuan (*knowledge base*) yang berisi referensi posisi pekerjaan IT beserta persyaratan keahlian, jenjang pendidikan, dan kisaran gajinya.
-* **`resumes_train.jsonl` & `resumes_test.jsonl**`: Dataset latih dan uji untuk model klasifikasi peran karir.
+* `resumes_train.jsonl` & `resumes_test.jsonl**`: Dataset latih dan uji untuk model klasifikasi peran karir.
 
 Cara Menjalankan Proyek (Setup Lokal)
 
