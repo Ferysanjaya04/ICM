@@ -5,10 +5,10 @@ IT Career CV Analyzer & Recommendation Engine
 
 
 Anggota Tim
-- Ihsan
-- Fery
-- Jojo
-- Farel
+- Ihsan abdillah 
+- Fery sanjaya 
+- Johanes hutapea
+- M.Farel raditya
 
 
 Arsitektur & Fitur Utama
