@@ -1,5 +1,3 @@
-# Laporan Tugas Mandiri / Quiz: Digital Awareness & Application Design
-
 ## Bagian 1. Identitas dan Topik Proyek Aplikasi
 
 * **Nama:** Ihsan  
@@ -97,25 +95,25 @@ Ketika sistem mengalami kendala operasional (kegagalan jaringan, berkas rusak, a
 **Contoh Rancangan Pesan Galat Ramah Pengguna:**
 
 1. **Kasus Berkas PDF Tidak Terbaca / Berkas Rusak:**
-   > 📄 **Berkas CV Belum Dapat Dibaca**  
-   > Sistem kami mengalami kendala saat membaca teks pada berkas yang kamu unggah. Hal ini biasanya terjadi jika berkas berupa hasil scan gambar/foto murni atau berkas terkunci kata sandi.  
-   > **Langkah yang dapat kamu lakukan:**  
-   > 1. Pastikan berkas tersimpan dalam format PDF berbasis teks (bisa disorot/dicopy).  
-   > 2. Pastikan ukuran berkas tidak melebihi batas maksimal 10 MB.  
-   > 3. Coba simpan ulang (*Export to PDF*) dokumen CV-mu, lalu unggah kembali.  
-   > `[ Tombol: Unggah Ulang Berkas ]`
+   **Berkas CV Belum Dapat Dibaca**  
+   Sistem kami mengalami kendala saat membaca teks pada berkas yang kamu unggah. Hal ini biasanya terjadi jika berkas berupa hasil scan gambar/foto murni atau berkas terkunci kata sandi.  
+   **Langkah yang dapat kamu lakukan:**  
+   1. Pastikan berkas tersimpan dalam format PDF berbasis teks (bisa disorot/dicopy).  
+   2. Pastikan ukuran berkas tidak melebihi batas maksimal 10 MB.  
+   3. Coba simpan ulang (*Export to PDF*) dokumen CV-mu, lalu unggah kembali.  
+   `[ Tombol: Unggah Ulang Berkas ]`
 
 2. **Kasus Kehilangan Koneksi Internet saat Unggah:**
-   > 🌐 **Koneksi Internet Terputus**  
-   > Kami tidak dapat menghubungi server karena koneksi internet di perangkatmu terputus saat proses pengiriman berkas.  
-   > **Langkah yang dapat kamu lakukan:**  
-   > 1. Periksa sambungan Wi-Fi atau paket data selulermu.  
-   > 2. Jika koneksi sudah stabil, klik tombol di bawah untuk mengirim ulang tanpa perlu memilih berkas dari awal.  
-   > `[ Tombol: Coba Kirim Ulang ]`
+   **Koneksi Internet Terputus**  
+   Kami tidak dapat menghubungi server karena koneksi internet di perangkatmu terputus saat proses pengiriman berkas.  
+   **Langkah yang dapat kamu lakukan:**  
+   1. Periksa sambungan Wi-Fi atau paket data selulermu.  
+   2. Jika koneksi sudah stabil, klik tombol di bawah untuk mengirim ulang tanpa perlu memilih berkas dari awal.  
+   `[ Tombol: Coba Kirim Ulang ]`
 
 3. **Kasus Server Sedang Mengalami Antrean / Pemeliharaan:**
-   > ⏳ **Layanan Sedang Mengantre**  
-   > Mesin analisis cerdas kami sedang memproses banyak permintaan secara bersamaan.  
-   > **Langkah yang dapat kamu lakukan:**  
-   > Tunggu sekitar 1 hingga 2 menit, lalu segarkan halaman ini. Data yang telah kamu masukkan tetap aman.  
-   > `[ Tombol: Muat Ulang Halaman ]`
+   **Layanan Sedang Mengantre**  
+    Mesin analisis cerdas kami sedang memproses banyak permintaan secara bersamaan.  
+    **Langkah yang dapat kamu lakukan:**  
+    Tunggu sekitar 1 hingga 2 menit, lalu segarkan halaman ini. Data yang telah kamu masukkan tetap aman.  
+   `[ Tombol: Muat Ulang Halaman ]`
