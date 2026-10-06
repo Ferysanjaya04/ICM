@@ -1,0 +1,211 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>{% block title %}ICM — IT Career CV Analyzer{% endblock %}</title>
+  <script>
+    (function(){try{var t=localStorage.getItem('icm-theme');if(t==='light'){document.documentElement.classList.remove('dark');}else{document.documentElement.classList.add('dark');}}catch(e){document.documentElement.classList.add('dark');}})();
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin=""/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            background: "var(--background)",
+            foreground: "var(--foreground)",
+            primary: "var(--primary)",
+            "primary-foreground": "var(--primary-foreground)",
+            secondary: "var(--secondary)",
+            "secondary-foreground": "var(--secondary-foreground)",
+            muted: "var(--muted)",
+            "muted-foreground": "var(--muted-foreground)",
+            card: "var(--card)",
+            "card-foreground": "var(--card-foreground)",
+            popover: "var(--popover)",
+            accent: "var(--accent)",
+            "accent-foreground": "var(--accent-foreground)",
+            border: "var(--border)",
+            edge: "var(--edge)",
+            input: "var(--input)",
+            ring: "var(--ring)",
+            success: "var(--success)",
+            destructive: "var(--destructive)",
+          },
+          fontFamily: {
+            x: ["Inter", "sans-serif"],
+            mono: ["JetBrains Mono", "monospace"],
+          }
+        }
+      }
+    };
+  </script>
+  <link rel="stylesheet" href="{% static 'css/shared/main.css' %}"/>
+  {% block extra_head %}{% endblock %}
+</head>
+<body class="bg-background text-foreground font-x min-h-screen flex flex-col antialiased">
+
+  {% include "shared/icons.html" %}
+
+  <div class="pixel-bg" aria-hidden="true"><canvas id="pixel-field" data-text="ICM"></canvas></div>
+  <div id="scroll-progress" aria-hidden="true"></div>
+  <div class="grain" aria-hidden="true" role="presentation"></div>
+
+  {% if messages %}
+    <div aria-live="polite" aria-atomic="true" class="fixed top-16 right-4 z-50 space-y-2 max-w-sm">
+      {% for message in messages %}
+        <div class="p-4 rounded-xl border shadow-lg flex items-center gap-3 text-sm bg-card text-card-foreground {% if message.tags == 'error' %}border-destructive/40{% elif message.tags == 'success' %}border-success/40{% else %}border-border{% endif %}">
+          {% if message.tags == 'error' %}<svg class="icon icon-lg shrink-0 text-destructive" aria-hidden="true"><use href="#icon-error"/></svg>{% elif message.tags == 'success' %}<svg class="icon icon-lg shrink-0 text-success" aria-hidden="true"><use href="#icon-success"/></svg>{% else %}<svg class="icon icon-lg shrink-0 text-accent" aria-hidden="true"><use href="#icon-about"/></svg>{% endif %}
+          <span>{{ message }}</span>
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  {% if not hide_navbar %}
+  <header class="sticky top-0 z-40 w-full border-b border-edge bg-background/80 backdrop-blur-md">
+    <div class="flex h-14 w-full items-center justify-between gap-2 px-2 sm:px-3">
+      <div class="flex items-center gap-2 min-w-0">
+      <a href="{% url 'analyzer:home' %}" class="flex items-center gap-2.5 shrink-0">
+        <svg class="nav-icon text-accent" aria-hidden="true"><use href="#icon-home"/></svg>
+        <span class="font-mono text-sm font-semibold tracking-tight">ICM</span>
+        <span class="badge badge-accent font-mono text-[10px] uppercase tracking-widest">AI v2.4</span>
+      </a>
+      <nav class="hidden md:flex items-center gap-2 text-sm" aria-label="Navigasi utama" data-grad-dock>
+        <a href="{% url 'analyzer:home' %}" class="grad-item grad-item-top" data-match="{% url 'analyzer:home' %}" style="--gf:#0891b2;--gt:#22d3ee" aria-label="Home">
+          <svg class="grad-icon" aria-hidden="true"><use href="#icon-home"/></svg>
+          <span class="grad-label">Home</span>
+        </a>
+        <a href="{% url 'analyzer:playground' %}" class="grad-item grad-item-top" data-match="{% url 'analyzer:playground' %}" style="--gf:#7c3aed;--gt:#d946ef" aria-label="Analyzer">
+          <svg class="grad-icon" aria-hidden="true"><use href="#icon-analyzer"/></svg>
+          <span class="grad-label">Analyzer</span>
+        </a>
+        <a href="{% url 'analyzer:dashboard' %}" class="grad-item grad-item-top" data-match="{% url 'analyzer:dashboard' %}" style="--gf:#0ea5e9;--gt:#22c55e" aria-label="Dashboard">
+          <svg class="grad-icon" aria-hidden="true"><use href="#icon-dashboard"/></svg>
+          <span class="grad-label">Dashboard</span>
+        </a>
+        <a href="{% url 'analyzer:about' %}" class="grad-item grad-item-top" data-match="{% url 'analyzer:about' %}" style="--gf:#f59e0b;--gt:#f43f5e" aria-label="About">
+          <svg class="grad-icon" aria-hidden="true"><use href="#icon-about"/></svg>
+          <span class="grad-label">About</span>
+        </a>
+        <a href="{% url 'analyzer:help' %}" class="grad-item grad-item-top" data-match="{% url 'analyzer:help' %}" style="--gf:#10b981;--gt:#06b6d4" aria-label="Help">
+          <svg class="grad-icon" aria-hidden="true"><use href="#icon-help"/></svg>
+          <span class="grad-label">Help</span>
+        </a>
+      </nav>
+      </div>
+      <div class="flex items-center gap-2 shrink-0">
+        <button id="theme-toggle" type="button" class="btn !px-2.5 !py-2" title="Toggle theme" aria-label="Toggle theme">
+          <svg class="icon" data-icon-dark aria-hidden="true"><use href="#icon-moon"/></svg>
+          <svg class="icon" data-icon-light style="display:none" aria-hidden="true"><use href="#icon-sun"/></svg>
+        </button>
+        {% if user.is_authenticated %}
+          <span class="hidden sm:block font-mono text-xs text-muted-foreground">{{ user.username }}</span>
+          <form action="{% url 'analyzer:logout' %}" method="post" class="inline">
+            {% csrf_token %}
+            <button type="submit" class="btn !px-2.5 !py-2" title="Sign Out" aria-label="Sign Out">
+              <svg class="icon" aria-hidden="true"><use href="#icon-logout"/></svg>
+            </button>
+          </form>
+        {% else %}
+          <a href="{% url 'analyzer:login' %}" class="hidden sm:inline-flex btn !py-2 text-xs">Sign In</a>
+          <a href="{% url 'analyzer:register' %}" class="hidden sm:inline-flex btn btn-primary !py-2 text-xs">Get Started</a>
+        {% endif %}
+        <button id="mobile-nav-btn" type="button" class="btn !px-2.5 !py-2 md:hidden" aria-label="Menu">
+          <svg class="icon" aria-hidden="true"><use href="#icon-menu"/></svg>
+        </button>
+      </div>
+    </div>
+    <div id="mobile-nav-menu" class="hidden md:hidden border-t border-edge">
+      <nav class="mx-auto max-w-5xl px-4 py-2 flex flex-col text-sm">
+        <a href="{% url 'analyzer:home' %}" class="px-2 py-2.5 text-muted-foreground hover:text-foreground">Home</a>
+        <a href="{% url 'analyzer:playground' %}" class="px-2 py-2.5 text-muted-foreground hover:text-foreground">Analyzer</a>
+        <a href="{% url 'analyzer:dashboard' %}" class="px-2 py-2.5 text-muted-foreground hover:text-foreground">Dashboard</a>
+        <a href="{% url 'analyzer:about' %}" class="px-2 py-2.5 text-muted-foreground hover:text-foreground">About</a>
+        <a href="{% url 'analyzer:help' %}" class="px-2 py-2.5 text-muted-foreground hover:text-foreground">Help</a>
+        {% if not user.is_authenticated %}
+          <div class="flex gap-2 py-2">
+            <a href="{% url 'analyzer:login' %}" class="btn flex-1 text-xs">Sign In</a>
+            <a href="{% url 'analyzer:register' %}" class="btn btn-primary flex-1 text-xs">Get Started</a>
+          </div>
+        {% endif %}
+      </nav>
+    </div>
+  </header>
+  {% endif %}
+
+  <main class="flex-1 w-full">
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="mt-auto border-t border-edge">
+    <div class="w-full px-2 sm:px-3 pt-10 pb-6">
+      <div class="flex justify-start pb-8">
+        <div class="space-y-1 bg-background rounded-xl border border-edge px-4 py-3 max-w-fit mr-auto text-left">
+          <p class="text-sm font-semibold">ICM — IT Career CV Analyzer & Matchmaking System</p>
+          <p class="font-mono text-xs text-muted-foreground uppercase tracking-wider">Politeknik Negeri Lampung • 2026</p>
+          <p class="font-mono text-xs text-muted-foreground">Ihsan • Johanes • Fery • Farel</p>
+        </div>
+      </div>
+      <div class="wordmark text-[22vw] sm:text-[10rem] leading-none text-left select-none pl-2 sm:pl-3" aria-hidden="true">ICM</div>
+      <div class="flex items-end justify-between gap-4 pt-4 font-mono text-[11px] text-muted-foreground">
+        <span class="self-end">© 2026 ICM</span>
+        <span class="flex gap-2 self-start">
+          <a href="#" class="grad-item grad-item-top" style="--gf:#333;--gt:#6e6e6e" aria-label="GitHub">
+            <svg class="grad-icon" aria-hidden="true"><use href="#icon-github"/></svg>
+            <span class="grad-label">GitHub</span>
+          </a>
+          <a href="#" class="grad-item grad-item-top" style="--gf:#f9ce34;--gt:#ee2a7b" aria-label="Instagram">
+            <svg class="grad-icon" aria-hidden="true"><use href="#icon-instagram"/></svg>
+            <span class="grad-label">Instagram</span>
+          </a>
+          <a href="#" class="grad-item grad-item-top" style="--gf:#0a66c2;--gt:#00a0dc" aria-label="LinkedIn">
+            <svg class="grad-icon" aria-hidden="true"><use href="#icon-linkedin"/></svg>
+            <span class="grad-label">LinkedIn</span>
+          </a>
+          <a href="#" class="grad-item grad-item-top" style="--gf:#ff0000;--gt:#ff5e62" aria-label="YouTube">
+            <svg class="grad-icon" aria-hidden="true"><use href="#icon-youtube"/></svg>
+            <span class="grad-label">YouTube</span>
+          </a>
+        </span>
+      </div>
+    </div>
+  </footer>
+
+  {% if not hide_navbar %}
+  <nav class="grad-dock md:hidden" aria-label="Navigasi cepat" data-grad-dock>
+    <a href="{% url 'analyzer:home' %}" class="grad-item" data-match="{% url 'analyzer:home' %}" style="--gf:#0891b2;--gt:#22d3ee" aria-label="Home">
+      <svg class="grad-icon" aria-hidden="true"><use href="#icon-home"/></svg>
+      <span class="grad-label">Home</span>
+    </a>
+    <a href="{% url 'analyzer:playground' %}" class="grad-item" data-match="{% url 'analyzer:playground' %}" style="--gf:#7c3aed;--gt:#d946ef" aria-label="Analyzer">
+      <svg class="grad-icon" aria-hidden="true"><use href="#icon-analyzer"/></svg>
+      <span class="grad-label">Analyzer</span>
+    </a>
+    <a href="{% url 'analyzer:dashboard' %}" class="grad-item" data-match="{% url 'analyzer:dashboard' %}" style="--gf:#0ea5e9;--gt:#22c55e" aria-label="Dashboard">
+      <svg class="grad-icon" aria-hidden="true"><use href="#icon-dashboard"/></svg>
+      <span class="grad-label">Dashboard</span>
+    </a>
+    <a href="{% url 'analyzer:about' %}" class="grad-item" data-match="{% url 'analyzer:about' %}" style="--gf:#f59e0b;--gt:#f43f5e" aria-label="About">
+      <svg class="grad-icon" aria-hidden="true"><use href="#icon-about"/></svg>
+      <span class="grad-label">About</span>
+    </a>
+    <a href="{% url 'analyzer:help' %}" class="grad-item" data-match="{% url 'analyzer:help' %}" style="--gf:#10b981;--gt:#06b6d4" aria-label="Help">
+      <svg class="grad-icon" aria-hidden="true"><use href="#icon-help"/></svg>
+      <span class="grad-label">Help</span>
+    </a>
+  </nav>
+  {% endif %}
+
+<script src="https://unpkg.com/@splinetool/viewer@1.9.28/build/spline-viewer.js" defer></script>
+  <script src="{% static 'js/shared/main.js' %}" defer></script>
+  <script src="{% static 'js/shared/pixel-field.js' %}" defer></script>
+  {% block extra_js %}{% endblock %}
+</body>
+</html>

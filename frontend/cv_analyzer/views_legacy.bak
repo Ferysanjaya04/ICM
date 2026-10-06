@@ -1,0 +1,277 @@
+from django.shortcuts import render, redirect
+from django.contrib.auth import login, authenticate, logout
+from django.contrib.auth.forms import AuthenticationForm
+from django.contrib.auth.decorators import login_required
+from django.views.decorators.http import require_http_methods
+from django.http import JsonResponse, HttpResponse
+from django.conf import settings
+from django.core.files.storage import FileSystemStorage
+from django.core.exceptions import ValidationError
+from django.views.decorators.csrf import csrf_exempt
+from django.utils import timezone
+from django.contrib import messages
+from django.urls import reverse
+from django.db import models
+
+from .forms import CVUploadForm, JobDescriptionForm, CustomUserCreationForm
+from .models import AnalysisLog, CustomUser
+from .ml_services import analyze_cv, recommend_career
+
+import os
+import json
+import logging
+
+logger = logging.getLogger(__name__)
+
+# Home Page
+@require_http_methods(["GET"])
+def home(request):
+    return render(request, 'home/index.html')
+
+# Authentication Views
+@require_http_methods(["GET", "POST"])
+def user_login(request):
+    if request.method == 'POST':
+        form = AuthenticationForm(request, data=request.POST)
+        if form.is_valid():
+            username = form.cleaned_data.get('username')
+            password = form.cleaned_data.get('password')
+            user = authenticate(username=username, password=password)
+            if user is not None:
+                login(request, user)
+                messages.success(request, f"Welcome back, {user.username}!")
+                return redirect('analyzer:dashboard')
+            else:
+                messages.error(request, "Invalid username or password.")
+        else:
+            messages.error(request, "Please correct the errors below.")
+    else:
+        form = AuthenticationForm()
+    return render(request, 'auth/login.html', {'form': form})
+
+@require_http_methods(["GET", "POST"])
+def user_register(request):
+    if request.method == 'POST':
+        form = CustomUserCreationForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            login(request, user)
+            messages.success(request, f"Account created successfully! Welcome, {user.username}.")
+            return redirect('analyzer:dashboard')
+        else:
+            messages.error(request, "Please correct the errors below.")
+    else:
+        form = CustomUserCreationForm()
+    return render(request, 'auth/register.html', {'form': form})
+
+@login_required
+@require_http_methods(["POST"])
+def user_logout(request):
+    logout(request)
+    messages.info(request, "You have been logged out successfully.")
+    return redirect('analyzer:home')
+
+# Dashboard
+@login_required
+@require_http_methods(["GET"])
+def dashboard(request):
+    base_qs = AnalysisLog.objects.filter(user=request.user).order_by('-created_at')
+    analyses = list(base_qs[:10])
+    total = base_qs.count()
+    avg = base_qs.aggregate(models.Avg('compatibility_score'))['compatibility_score__avg'] or 0
+    first = base_qs.first()
+    top_role = 'N/A'
+    if first and first.top_roles:
+        try:
+            top_role = first.top_roles[0].get('role', 'N/A')
+        except (AttributeError, IndexError, TypeError):
+            top_role = 'N/A'
+    stats = {
+        'total_analyses': total,
+        'average_score': avg,
+        'top_role': top_role,
+        'improvement_rate': 0  # Placeholder for future implementation
+    }
+    return render(request, 'dashboard/index.html', {
+        'analyses': analyses,
+        'stats': stats
+    })
+
+# CV Analysis Views
+@login_required
+@require_http_methods(["GET", "POST"])
+def cv_analyzer(request):
+    if request.method == 'POST':
+        cv_form = CVUploadForm(request.POST, request.FILES)
+        job_form = JobDescriptionForm(request.POST)
+        if cv_form.is_valid() and job_form.is_valid():
+            try:
+                cv_file = request.FILES['cv_file']
+                job_description = job_form.cleaned_data['job_description']
+                mode = request.POST.get('mode', 'match')
+
+                # Save file temporarily
+                fs = FileSystemStorage()
+                filename = fs.save(cv_file.name, cv_file)
+                file_path = fs.path(filename)
+
+                # Process based on mode
+                if mode == 'match':
+                    results = analyze_cv(file_path, job_description)
+                else:
+                    results = recommend_career(file_path)
+
+                # Save to database
+                analysis = AnalysisLog.objects.create(
+                    user=request.user,
+                    cv_file=cv_file.name,
+                    job_description=job_description,
+                    results=results,
+                    mode=mode,
+                    compatibility_score=results.get('compatibility_score', 0),
+                    compatibility_level=results.get('compatibility_level', 'LOW'),
+                    top_roles=results.get('top_roles', []),
+                    skill_gap_matched=results.get('skill_gap_matched', []),
+                    skill_gap_missing=results.get('skill_gap_missing', []),
+                    roadmap=results.get('roadmap', []),
+                    processing_time_ms=results.get('processing_time_ms', 0)
+                )
+
+                # Clean up
+                fs.delete(filename)
+
+                return redirect('analyzer:analysis_results', analysis_id=analysis.id)
+            except Exception as e:
+                logger.error(f"Analysis failed: {str(e)}")
+                messages.error(request, f"Analysis failed: {str(e)}")
+        else:
+            messages.error(request, "Please correct the errors in the form.")
+    else:
+        cv_form = CVUploadForm()
+        job_form = JobDescriptionForm()
+
+    return render(request, 'analyzer/form.html', {
+        'cv_form': cv_form,
+        'job_form': job_form
+    })
+
+@login_required
+@require_http_methods(["GET"])
+def analysis_results(request, analysis_id):
+    try:
+        analysis = AnalysisLog.objects.get(id=analysis_id, user=request.user)
+        return render(request, 'analyzer/result.html', {'analysis': analysis})
+    except AnalysisLog.DoesNotExist:
+        messages.error(request, "Analysis not found or you don't have permission to view it.")
+        return redirect('analyzer:dashboard')
+
+# Static Pages
+@require_http_methods(["GET"])
+def about(request):
+    return render(request, 'about/index.html')
+
+@require_http_methods(["GET"])
+def help_page(request):
+    return render(request, 'help/index.html')
+
+@require_http_methods(["GET"])
+def privacy(request):
+    return render(request, 'privacy/index.html')
+
+# API Endpoints
+@csrf_exempt
+@require_http_methods(["POST"])
+def api_match_cv(request):
+    if not request.user.is_authenticated:
+        return JsonResponse({'error': 'Authentication required'}, status=401)
+
+    try:
+        cv_file = request.FILES.get('cv_file')
+        job_description = request.POST.get('job_description', '')
+
+        if not cv_file or not job_description:
+            return JsonResponse({'error': 'CV file and job description are required'}, status=400)
+
+        # Save temporarily
+        fs = FileSystemStorage()
+        filename = fs.save(cv_file.name, cv_file)
+        file_path = fs.path(filename)
+
+        # Process
+        results = analyze_cv(file_path, job_description)
+
+        # Save to database
+        analysis = AnalysisLog.objects.create(
+            user=request.user,
+            cv_file=cv_file.name,
+            job_description=job_description,
+            results=results,
+            mode='match',
+            compatibility_score=results.get('compatibility_score', 0),
+            compatibility_level=results.get('compatibility_level', 'LOW'),
+            top_roles=results.get('top_roles', []),
+            skill_gap_matched=results.get('skill_gap_matched', []),
+            skill_gap_missing=results.get('skill_gap_missing', []),
+            roadmap=results.get('roadmap', []),
+            processing_time_ms=results.get('processing_time_ms', 0)
+        )
+
+        # Clean up
+        fs.delete(filename)
+
+        return JsonResponse({
+            'status': 'success',
+            'analysis_id': analysis.id,
+            'results': results
+        })
+    except Exception as e:
+        logger.error(f"API analysis failed: {str(e)}")
+        return JsonResponse({'error': str(e)}, status=500)
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def api_recommend_career(request):
+    if not request.user.is_authenticated:
+        return JsonResponse({'error': 'Authentication required'}, status=401)
+
+    try:
+        cv_file = request.FILES.get('cv_file')
+
+        if not cv_file:
+            return JsonResponse({'error': 'CV file is required'}, status=400)
+
+        # Save temporarily
+        fs = FileSystemStorage()
+        filename = fs.save(cv_file.name, cv_file)
+        file_path = fs.path(filename)
+
+        # Process
+        results = recommend_career(file_path)
+
+        # Save to database
+        analysis = AnalysisLog.objects.create(
+            user=request.user,
+            cv_file=cv_file.name,
+            job_description='',
+            results=results,
+            mode='career',
+            compatibility_score=results.get('compatibility_score', 0),
+            compatibility_level=results.get('compatibility_level', 'LOW'),
+            top_roles=results.get('top_roles', []),
+            skill_gap_matched=results.get('skill_gap_matched', []),
+            skill_gap_missing=results.get('skill_gap_missing', []),
+            roadmap=results.get('roadmap', []),
+            processing_time_ms=results.get('processing_time_ms', 0)
+        )
+
+        # Clean up
+        fs.delete(filename)
+
+        return JsonResponse({
+            'status': 'success',
+            'analysis_id': analysis.id,
+            'results': results
+        })
+    except Exception as e:
+        logger.error(f"API recommendation failed: {str(e)}")
+        return JsonResponse({'error': str(e)}, status=500)

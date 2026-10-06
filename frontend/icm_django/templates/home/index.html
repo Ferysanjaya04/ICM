@@ -1,0 +1,44 @@
+{% extends "shared/base.html" %}
+{% block title %}ICM — IT Career CV Analyzer{% endblock %}
+{% block content %}
+<section class="w-full max-w-3xl px-2 sm:px-3">
+  <div class="section-frame bg-background px-4 py-10 sm:px-8">
+    <div data-reveal>
+      <span class="eyebrow">AI-Powered IT Career Matchmaking v2.4</span>
+      <h1 class="mt-4 text-3xl sm:text-4xl font-semibold tracking-tight leading-tight">Stop Guessing Your IT Career.</h1>
+      <p class="mt-1 font-mono text-xs uppercase tracking-wider text-muted-foreground">Know your CV compatibility score instantly</p>
+    </div>
+    <div data-reveal data-delay="150">
+      <p class="mt-6 text-sm leading-relaxed text-foreground/70">Dual-engine neural platform powered by SentenceTransformer embeddings dan TF-IDF 5.000 features. Dua mode: bandingkan CV dengan lowongan, atau dapatkan rekomendasi karier dari CV saja.</p>
+    </div>
+    <div class="mt-8 flex flex-col sm:flex-row gap-3" data-reveal data-delay="300">
+      <a href="{% url 'analyzer:playground' %}?mode=match" class="btn btn-primary flex-1">
+        <svg class="icon" aria-hidden="true"><use href="#icon-work"/></svg>
+        Analyze CV vs Job
+      </a>
+      <a href="{% url 'analyzer:playground' %}?mode=career" class="btn flex-1">
+        <svg class="icon" aria-hidden="true"><use href="#icon-spark"/></svg>
+        Career Recommendations
+      </a>
+    </div>
+    <div class="mt-8 grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div class="card p-4 text-center">
+        <p class="font-mono text-xl font-semibold text-accent">86.88%</p>
+        <p class="mt-1 font-mono text-[10px] uppercase tracking-wider text-muted-foreground">Match Precision</p>
+      </div>
+      <div class="card p-4 text-center">
+        <p class="font-mono text-xl font-semibold">91.25%</p>
+        <p class="mt-1 font-mono text-[10px] uppercase tracking-wider text-muted-foreground">Role F1</p>
+      </div>
+      <div class="card p-4 text-center">
+        <p class="font-mono text-xl font-semibold">324</p>
+        <p class="mt-1 font-mono text-[10px] uppercase tracking-wider text-muted-foreground">IT Roles</p>
+      </div>
+      <div class="card p-4 text-center">
+        <p class="font-mono text-xl font-semibold">120+</p>
+        <p class="mt-1 font-mono text-[10px] uppercase tracking-wider text-muted-foreground">Skills</p>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

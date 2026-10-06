@@ -1,0 +1,50 @@
+{% extends "shared/base.html" %}
+{% block title %}Dashboard — ICM{% endblock %}
+{% block content %}
+<section class="w-full max-w-3xl px-2 sm:px-3">
+  <div class="section-frame bg-background px-4 py-10 sm:px-8">
+    <div data-reveal>
+      <span class="eyebrow">Dashboard</span>
+      <h1 class="mt-4 text-2xl font-semibold tracking-tight">Riwayat Analisis</h1>
+      <p class="mt-1 font-mono text-xs uppercase tracking-wider text-muted-foreground">10 analisis terakhir • progres skill</p>
+    </div>
+    <div class="mt-8 grid grid-cols-3 gap-3" data-reveal data-delay="150">
+      <div class="card p-4 text-center">
+        <p class="font-mono text-2xl font-semibold">{{ stats.total_analyses }}</p>
+        <p class="mt-1 font-mono text-[11px] uppercase tracking-wider text-muted-foreground">Total</p>
+      </div>
+      <div class="card p-4 text-center">
+        <p class="font-mono text-2xl font-semibold">{% widthratio stats.average_score 1 100 %}%</p>
+        <p class="mt-1 font-mono text-[11px] uppercase tracking-wider text-muted-foreground">Rerata</p>
+      </div>
+      <div class="card p-4 text-center">
+        <p class="truncate text-sm font-semibold">{{ stats.top_role }}</p>
+        <p class="mt-1 font-mono text-[11px] uppercase tracking-wider text-muted-foreground">Top role</p>
+      </div>
+    </div>
+    <div class="mt-8 space-y-3" data-reveal data-delay="300">
+      {% for a in analyses %}
+      <a href="{% url 'analyzer:analysis_results' analysis_id=a.id %}" class="card block p-4 transition-colors hover:border-ring">
+        <div class="flex items-center justify-between gap-3 text-sm">
+          <div class="min-w-0">
+            <p class="truncate font-medium">{{ a.cv_file }}</p>
+            <p class="mt-0.5 font-mono text-[11px] uppercase tracking-wider text-muted-foreground">{{ a.mode }} • {{ a.created_at|date:"d M Y H:i" }}</p>
+          </div>
+          <div class="shrink-0 text-right">
+            <p class="font-mono text-lg font-semibold">{% widthratio a.compatibility_score 1 100 %}%</p>
+            <p class="font-mono text-[10px] uppercase tracking-wider text-accent">{{ a.compatibility_level }}</p>
+          </div>
+        </div>
+      </a>
+      {% empty %}
+      <div class="card p-8 text-center">
+        <svg class="icon icon-lg text-muted-foreground mx-auto" aria-hidden="true"><use href="#icon-inbox"/></svg>
+        <p class="mt-3 text-sm font-medium">Belum ada analisis</p>
+        <p class="mt-1 text-xs text-muted-foreground">Upload CV pertama Anda untuk melihat skor di sini.</p>
+        <a href="{% url 'analyzer:playground' %}" class="btn btn-primary mt-5">Mulai Analisis</a>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,283 @@
+/* ─────────────────────────────────────────────
+   ICM — Design tokens (adapted from ruixenui/portfolio)
+   Semantic vars, light default + .dark, zinc base + cyan accent.
+   Tailwind CDN maps color names -> these vars (see base.html).
+   ───────────────────────────────────────────── */
+
+:root {
+  --background: #ffffff;
+  --foreground: #09090b;
+  --primary: #09090b;
+  --primary-foreground: #fafafa;
+  --secondary: #f4f4f5;
+  --secondary-foreground: #09090b;
+  --muted: #f4f4f5;
+  --muted-foreground: #71717a;
+  --card: #ffffff;
+  --card-foreground: #09090b;
+  --popover: #ffffff;
+  --popover-foreground: #09090b;
+  --accent: #0891b2;
+  --accent-foreground: #ffffff;
+  --border: #e4e4e7;
+  --edge: #eeeeef;
+  --input: #e4e4e7;
+  --ring: #a1a1aa;
+  --success: #16a34a;
+  --destructive: #dc2626;
+  --link: #1d4ed8;
+  --corner: rgba(9, 9, 11, 0.3);
+  --shadow-popover: 0 6px 24px rgba(0, 0, 0, 0.12);
+}
+
+.dark {
+  --background: #09090b;
+  --foreground: #fafafa;
+  --primary: #3f3f46;
+  --primary-foreground: #fafafa;
+  --secondary: #27272a;
+  --secondary-foreground: #fafafa;
+  --muted: #27272a;
+  --muted-foreground: #a1a1aa;
+  --card: #18181b;
+  --card-foreground: #fafafa;
+  --popover: #18181b;
+  --popover-foreground: #fafafa;
+  --accent: #22d3ee;
+  --accent-foreground: #09090b;
+  --border: #27272a;
+  --edge: #1d1d20;
+  --input: #27272a;
+  --ring: #71717a;
+  --success: #22c55e;
+  --destructive: #b91c1c;
+  --link: #3b82f6;
+  --corner: rgba(250, 250, 250, 0.3);
+  --shadow-popover: 0 0 24px rgba(0, 0, 0, 0.5);
+}
+
+/* ── Base ── */
+html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+
+/* --- Noise Grain & Progress --- */
+.grain {
+  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  pointer-events: none; z-index: 9999; opacity: 0.04;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E");
+}
+#scroll-progress {
+  position: fixed; top: 0; left: 0; height: 2px;
+  background: var(--accent, #6366f1); z-index: 10000;
+  width: 0%; transition: width 0.08s linear;
+}
+.is-magnetic { transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1); }
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-feature-settings: "rlig" 1, "calt" 1;
+}
+::selection { background: var(--accent); color: var(--accent-foreground); }
+a, button { cursor: pointer; }
+a { transition: color 0.3s; }
+button:disabled, button[disabled] { cursor: not-allowed; }
+:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+
+/* ── Scrollbar (thin, tokenized) ── */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 5px; }
+* { scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
+
+/* ── Section frame: side hairlines + 4 corner marks, pure CSS ── */
+.section-frame { position: relative; }
+@media (min-width: 640px) {
+  .section-frame {
+    border-left: 1px solid var(--edge);
+    border-right: 1px solid var(--edge);
+    background-image:
+      linear-gradient(var(--corner), var(--corner)),
+      linear-gradient(var(--corner), var(--corner)),
+      linear-gradient(var(--corner), var(--corner)),
+      linear-gradient(var(--corner), var(--corner)),
+      linear-gradient(var(--corner), var(--corner)),
+      linear-gradient(var(--corner), var(--corner)),
+      linear-gradient(var(--corner), var(--corner)),
+      linear-gradient(var(--corner), var(--corner));
+    background-size: 7px 1px, 1px 7px, 7px 1px, 1px 7px, 7px 1px, 1px 7px, 7px 1px, 1px 7px;
+    background-position: left top, left top, right top, right top, left bottom, left bottom, right bottom, right bottom;
+    background-repeat: no-repeat;
+  }
+}
+
+/* ── Reveal on load: portfolio RevealOnLoad (blur + rise + settle, stagger via data-delay) ── */
+[data-reveal] {
+  opacity: 0;
+  transform: translateY(24px) scale(0.995);
+  filter: blur(8px);
+  transition: opacity 0.7s cubic-bezier(0.25, 0.4, 0.25, 1), transform 0.7s cubic-bezier(0.25, 0.4, 0.25, 1), filter 0.7s cubic-bezier(0.25, 0.4, 0.25, 1);
+}
+[data-reveal="left"] { transform: translateX(24px) scale(0.995); }
+[data-reveal="right"] { transform: translateX(-24px) scale(0.995); }
+[data-reveal].is-visible { opacity: 1; transform: none; filter: blur(0); }
+[data-delay="150"] { transition-delay: 0.15s; }
+[data-delay="300"] { transition-delay: 0.3s; }
+
+/* ── Component shortcuts ── */
+.card {
+  background: var(--card);
+  color: var(--card-foreground);
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+}
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
+  padding: 0.625rem 1.25rem; border-radius: 0.625rem;
+  font-size: 0.875rem; font-weight: 600;
+  border: 1px solid var(--border);
+  transition: background 0.2s, border-color 0.2s, filter 0.2s;
+}
+.btn-primary { background: var(--primary); color: var(--primary-foreground); border-color: transparent; }
+.btn-primary:hover { filter: brightness(1.15); }
+.btn-accent { background: var(--accent); color: var(--accent-foreground); border-color: transparent; }
+.btn-accent:hover { filter: brightness(1.1); }
+.btn:disabled { opacity: 0.5; }
+.field {
+  width: 100%; background: var(--background); color: var(--foreground);
+  border: 1px solid var(--input); border-radius: 0.625rem;
+  padding: 0.625rem 0.875rem; font-size: 0.875rem;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.field::placeholder { color: var(--muted-foreground); opacity: 0.7; }
+.field:focus { outline: none; border-color: var(--ring); box-shadow: 0 0 0 1px var(--ring); }
+textarea.field { resize: vertical; }
+.badge {
+  display: inline-flex; align-items: center; gap: 0.375rem;
+  padding: 0.25rem 0.625rem; border-radius: 9999px;
+  font-size: 0.75rem; font-weight: 500;
+  background: var(--secondary); color: var(--secondary-foreground);
+  border: 1px solid var(--border);
+}
+.badge-accent { background: transparent; color: var(--accent); border-color: var(--accent); }
+.label {
+  display: block; font-size: 0.75rem; font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.08em;
+  color: var(--muted-foreground); margin-bottom: 0.5rem;
+  font-family: "JetBrains Mono", monospace;
+}
+.eyebrow {
+  display: inline-block; padding: 0.25rem 0.75rem; border-radius: 9999px;
+  background: var(--secondary); border: 1px solid var(--border);
+  color: var(--accent); font-size: 0.75rem;
+  font-family: "JetBrains Mono", monospace;
+  text-transform: uppercase; letter-spacing: 0.12em;
+}
+
+/* ── Skill badge (legacy) ── */
+.skill-badge {
+  display: inline-flex; align-items: center;
+  padding: 2px 10px; border-radius: 9999px;
+  font-size: 0.75rem; font-weight: 500;
+}
+
+/* ── Auth inputs: moved to css/auth/auth.css, loaded only on auth pages ── */
+
+/* ── Wordmark footer ── */
+.wordmark {
+  font-weight: 800; letter-spacing: -0.04em; line-height: 0.9;
+  color: transparent; -webkit-text-stroke: 1px var(--border);
+  user-select: none;
+}
+
+/* ── Feature icons: thin-stroke sprite, theme-adaptive (currentColor), portfolio motion ── */
+.icon { width: 1.15em; height: 1.15em; flex: none; vertical-align: -0.2em; transition: transform 0.3s, color 0.3s; }
+.nav-icon { width: 1.1rem; height: 1.1rem; color: var(--muted-foreground); transition: color 0.3s, transform 0.3s; }
+.nav-link:hover .nav-icon { color: var(--accent); transform: translateY(-1px); }
+.feature-icon { width: 1.4rem; height: 1.4rem; color: var(--accent); }
+.icon-lg { width: 2rem; height: 2rem; }
+.btn:hover .icon { transform: translateY(-1px) scale(1.08); }
+a.card:hover .icon { transform: scale(1.1); }
+details .icon-chevron { transition: transform 0.3s; }
+details[open] .icon-chevron { transform: rotate(180deg); }
+
+/* ── Gradient dock: floating bottom nav (adapted from gradient-menu ref).
+      Pill expands on hover/focus/active, gradient wash + blur glow, label fades in.
+      Colors per item via --gf/--gt inline vars; icon = local thin-stroke sprite.
+      .grad-item-top = compact header variant (smaller pill, expands on hover/active). ── */
+.grad-item-top {
+  width: 2.5rem; height: 2.5rem;
+  box-shadow: none;
+}
+.grad-item-top .grad-icon { width: 1.1rem; height: 1.1rem; }
+.grad-item-top:hover, .grad-item-top:focus-visible, .grad-item-top.is-active { width: 6.5rem; }
+.grad-item-top .grad-label { font-size: 0.65rem; }
+.grad-dock {
+  position: fixed; left: 50%; bottom: max(1rem, env(safe-area-inset-bottom)); transform: translateX(-50%);
+  z-index: 50; display: flex; gap: 0.9rem; align-items: center;
+}
+.grad-item {
+  --gf: var(--accent); --gt: var(--accent);
+  position: relative; display: flex; align-items: center; justify-content: center;
+  width: 3.5rem; height: 3.5rem; border-radius: 9999px;
+  background: var(--card); border: 1px solid var(--border);
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.12);
+  transition: width 0.5s cubic-bezier(0.25, 0.4, 0.25, 1), box-shadow 0.5s, border-color 0.3s;
+  overflow: visible; text-decoration: none;
+}
+.grad-item::before {
+  content: ""; position: absolute; inset: 0; border-radius: 9999px;
+  background: linear-gradient(45deg, var(--gf), var(--gt));
+  opacity: 0; transition: opacity 0.5s;
+}
+.grad-item::after {
+  content: ""; position: absolute; top: 10px; left: 0; right: 0; height: 100%;
+  border-radius: 9999px; z-index: -1;
+  background: linear-gradient(45deg, var(--gf), var(--gt));
+  filter: blur(15px); opacity: 0; transition: opacity 0.5s;
+}
+.grad-item .grad-icon {
+  position: relative; z-index: 1; width: 1.35rem; height: 1.35rem;
+  color: var(--muted-foreground); transition: transform 0.5s, color 0.3s, opacity 0.3s;
+}
+.grad-item .grad-label {
+  position: absolute; z-index: 1; white-space: nowrap;
+  color: #fff; font-size: 0.72rem; font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.08em;
+  transform: scale(0); opacity: 0; transition: transform 0.5s, opacity 0.3s; transition-delay: 0s;
+}
+.grad-item:hover, .grad-item:focus-visible, .grad-item.is-active { width: 8.5rem; border-color: transparent; }
+.grad-item:hover::before, .grad-item:focus-visible::before, .grad-item.is-active::before { opacity: 1; }
+.grad-item:hover::after, .grad-item:focus-visible::after, .grad-item.is-active::after { opacity: 0.5; }
+.grad-item:hover .grad-icon, .grad-item:focus-visible .grad-icon, .grad-item.is-active .grad-icon {
+  transform: scale(0); opacity: 0;
+}
+.grad-item:hover .grad-label, .grad-item:focus-visible .grad-label, .grad-item.is-active .grad-label {
+  transform: scale(1); opacity: 1; transition-delay: 0.15s;
+}
+.grad-item:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+@media (max-width: 767px) { main { padding-bottom: 6rem; } }
+main { padding-bottom: 6.5rem; }
+footer { padding-bottom: 5rem; }
+
+/* ── Pixel flow field: fixed full-page canvas, text "ICM", pointer-reactive ── */
+.pixel-bg { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
+.pixel-bg canvas { width: 100%; height: 100%; display: block; }
+body > header, body > main, body > footer, body > nav.grad-dock { position: relative; z-index: 1; }
+.pixel-bg.pixel-fallback { background-image: radial-gradient(var(--accent) 1px, transparent 1px); background-size: 12px 12px; opacity: 0.4; }
+
+/* ── Nexus UX port: scroll progress, magnetic CTA, marquee (vanilla, no deps) ── */
+#scroll-progress{position:fixed;top:0;left:0;height:2px;width:0;background:var(--accent);z-index:100;pointer-events:none}
+.btn-magnetic{will-change:transform;transition:transform .25s cubic-bezier(.25,.46,.45,.94),background .2s,border-color .2s,filter .2s}
+.marquee{overflow:hidden;white-space:nowrap}
+.marquee-track{display:inline-flex;align-items:center;width:max-content;animation:marquee 25s linear infinite}
+.marquee-track span{margin:0 1.5rem}
+@keyframes marquee{to{transform:translateX(-50%)}}
+@media (prefers-reduced-motion: reduce){.marquee-track{animation:none}.btn-magnetic{transition:none}}
+
+/* ── Reduced motion ── */
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  [data-reveal] { opacity: 1; transform: none; transition: none; }
+  .progress-ring-circle { animation: none; }
+  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}

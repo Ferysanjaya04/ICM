@@ -1,0 +1,40 @@
+{% extends "shared/base.html" %}
+{% load static %}
+{% block title %}Sign In — ICM{% endblock %}
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'css/auth/auth.css' %}"/>
+{% endblock %}
+{% block content %}
+<section class="w-full max-w-3xl px-2 sm:px-3">
+  <div class="section-frame px-4 py-10 sm:px-8">
+    <div class="mx-auto w-full max-w-md" data-reveal>
+      <div class="text-center">
+        <span class="eyebrow">ICM</span>
+        <h1 class="mt-4 text-2xl font-semibold tracking-tight">Welcome Back</h1>
+        <p class="mt-1 font-mono text-xs uppercase tracking-wider text-muted-foreground">Sign in to your account</p>
+      </div>
+      <div class="auth-card card mt-8 p-8">
+        <form method="post" action="{% url 'analyzer:login' %}" novalidate>
+          {% csrf_token %}
+          <div class="space-y-5">
+            {% for field in form %}
+              <div>
+                <label for="{{ field.id_for_label }}" class="label">{{ field.label }}</label>
+                {{ field }}
+                {% if field.errors %}
+                  <p class="mt-1 text-xs text-destructive">{{ field.errors|join:", " }}</p>
+                {% endif %}
+              </div>
+            {% endfor %}
+          </div>
+          <button type="submit" class="btn btn-primary w-full mt-7">Sign In</button>
+        </form>
+        <p class="text-center text-xs text-muted-foreground mt-6">
+          Don't have an account?
+          <a href="{% url 'analyzer:register' %}" class="text-accent font-semibold hover:underline ml-1">Create one</a>
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

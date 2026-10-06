@@ -1,0 +1,43 @@
+{% extends "shared/base.html" %}
+{% load static %}
+{% block title %}Create Account — ICM{% endblock %}
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'css/auth/auth.css' %}"/>
+{% endblock %}
+{% block content %}
+<section class="w-full max-w-3xl px-2 sm:px-3">
+  <div class="section-frame px-4 py-10 sm:px-8">
+    <div class="mx-auto w-full max-w-md" data-reveal>
+      <div class="text-center">
+        <span class="eyebrow">ICM</span>
+        <h1 class="mt-4 text-2xl font-semibold tracking-tight">Create Account</h1>
+        <p class="mt-1 font-mono text-xs uppercase tracking-wider text-muted-foreground">Start analyzing your IT career</p>
+      </div>
+      <div class="auth-card card mt-8 p-8">
+        <form method="post" action="{% url 'analyzer:register' %}" novalidate>
+          {% csrf_token %}
+          <div class="space-y-5">
+            {% for field in form %}
+              <div>
+                <label for="{{ field.id_for_label }}" class="label">{{ field.label }}</label>
+                {{ field }}
+                {% if field.help_text %}
+                  <p class="mt-1 text-[11px] text-muted-foreground">{{ field.help_text }}</p>
+                {% endif %}
+                {% if field.errors %}
+                  <p class="mt-1 text-xs text-destructive">{{ field.errors|join:", " }}</p>
+                {% endif %}
+              </div>
+            {% endfor %}
+          </div>
+          <button type="submit" class="btn btn-primary w-full mt-7">Create Account</button>
+        </form>
+        <p class="text-center text-xs text-muted-foreground mt-6">
+          Already have an account?
+          <a href="{% url 'analyzer:login' %}" class="text-accent font-semibold hover:underline ml-1">Sign in</a>
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,35 @@
+{% extends "shared/base.html" %}
+{% block title %}Privasi — ICM{% endblock %}
+{% block content %}
+<section class="w-full max-w-3xl px-2 sm:px-3">
+  <div class="section-frame px-4 py-10 sm:px-8">
+    <div data-reveal>
+      <span class="eyebrow">Kebijakan privasi</span>
+      <h1 class="mt-4 text-2xl font-semibold tracking-tight">Data Anda, milik Anda</h1>
+      <p class="mt-1 font-mono text-xs uppercase tracking-wider text-muted-foreground">Terakhir diperbarui • 2026</p>
+    </div>
+    <div class="mt-8 space-y-6 text-sm leading-relaxed text-foreground/70" data-reveal data-delay="150">
+      <div>
+        <h2 class="font-mono text-xs font-semibold uppercase tracking-wider text-foreground">1. File CV sementara</h2>
+        <p class="mt-2">File yang diupload hanya disimpan sementara selama proses analisis lalu dihapus otomatis. Yang tersimpan permanen hanya hasil skor, skill gap, dan roadmap — terikat ke akun Anda.</p>
+      </div>
+      <div>
+        <h2 class="font-mono text-xs font-semibold uppercase tracking-wider text-foreground">2. Yang kami simpan</h2>
+        <p class="mt-2">Nama file, job description yang Anda tempel, hasil analisis (skor, level, top roles, skill cocok/hilang), waktu proses, dan timestamp. Tidak ada pelacakan iklan, tidak ada penjualan data.</p>
+      </div>
+      <div>
+        <h2 class="font-mono text-xs font-semibold uppercase tracking-wider text-foreground">3. Akses & hapus</h2>
+        <p class="mt-2">Hasil hanya bisa dilihat akun pemiliknya (UUID per analisis). Minta hapus riwayat kapan saja lewat tim — Ihsan • Johanes • Fery • Farel, Informatics Engineering, Polinela.</p>
+      </div>
+      <div>
+        <h2 class="font-mono text-xs font-semibold uppercase tracking-wider text-foreground">4. Keamanan</h2>
+        <p class="mt-2">CSRF protection aktif di semua form, password di-hash Django, session-based auth. Jangan upload dokumen berisi NIK, nomor rekening, atau data sensitif lain — CV ringkas cukup.</p>
+      </div>
+    </div>
+    <div class="mt-8 flex flex-col sm:flex-row gap-3" data-reveal data-delay="300">
+      <a href="{% url 'analyzer:playground' %}" class="btn btn-primary flex-1">Kembali ke Analyzer</a>
+      <a href="{% url 'analyzer:help' %}" class="btn flex-1">Bantuan & FAQ</a>
+    </div>
+  </div>
+</section>
+{% endblock %}

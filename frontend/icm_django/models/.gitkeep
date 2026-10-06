@@ -1,0 +1,5 @@
+# placeholder — ML models go here (do NOT commit .joblib/.pkl to git)
+# Use Git LFS or external model storage for large binary files.
+# Expected files:
+#   job_role_classifier.joblib   — TF-IDF + Logistic Regression model
+#   tfidf_vectorizer.joblib      — Fitted TF-IDF vectorizer
