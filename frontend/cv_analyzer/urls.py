@@ -1,19 +1,15 @@
 from django.urls import path
-from . import views
+from .api.client import APIClient
 
-app_name = 'analyzer'
+api_client = APIClient()
 
 urlpatterns = [
-    path('', views.home, name='home'),
-    path('playground/', views.cv_analyzer, name='playground'),
-    path('dashboard/', views.dashboard, name='dashboard'),
-    path('about/', views.about, name='about'),
-    path('help/', views.help_page, name='help'),
-    path('privacy/', views.privacy, name='privacy'),
-    path('accounts/login/', views.user_login, name='login'),
-    path('accounts/register/', views.user_register, name='register'),
-    path('accounts/logout/', views.user_logout, name='logout'),
-    path('api/match-cv/', views.api_match_cv, name='api_match_cv'),
-    path('api/recommend-career/', views.api_recommend_career, name='api_recommend_career'),
-    path('analysis/<uuid:analysis_id>/', views.analysis_results, name='analysis_results'),
+    path("analyze/", lambda request: api_client.analyze_cv(request.FILES["cv"], request.POST["job_description"])),
+    path("recommend/", lambda request: api_client.get_recommendation(request.FILES["cv"])),
+    path("auth/login/", lambda request: api_client.login(request.POST["username"], request.POST["password"])),
+    path("auth/register/", lambda request: api_client.register(request.POST["username"], request.POST["email"], request.POST["password"])),
+    path("dashboard/", lambda request: {"message": "Dashboard view"}),
+    path("about/", lambda request: {"message": "About page"}),
+    path("help/", lambda request: {"message": "Help page"}),
+    path("privacy/", lambda request: {"message": "Privacy policy"}),
 ]

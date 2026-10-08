@@ -137,6 +137,5 @@ REST_FRAMEWORK = {
 # CORS settings
 CORS_ALLOW_ALL_ORIGINS = True
 
-# Media files
-MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
+# ── Backend API URL ─────────────────────────
+BACKEND_API_URL = os.environ.get('BACKEND_API_URL', 'http://localhost:8001')
