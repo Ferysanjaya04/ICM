@@ -1,36 +1,335 @@
-# Rancangan Spesifikasi REST API (Draft Minggu 1)
-**Proyek:** IT Career CV Analyzer & Matchmaking System  
-**Mata Kuliah:** Internet Programming II  
-**Kelompok:** Ihsan (Architect), Fery (AI/Data), Jojo (Backend), Farel (Analyst)  
-**Tanggal:** Minggu 1 – Foundation & Setup  
+# Rancangan Spesifikasi REST API
 
----
+## IT Career CV Analyzer & Matchmaking System (ICM)
 
-## Stack Backend (Rencana)
-- **Framework:** FastAPI (Python 3.11)  
-- **Validasi Data:** Pydantic v2  
-- **PDF Parsing:** PyMuPDF (`fitz`)  
-- **AI Engine:** `sentence-transformers/all-MiniLM-L6-v2` (Hugging Face)  
-- **Database:** PostgreSQL (produksi) / SQLite (development)  
-- **Deployment:** Docker + Cloud (VPS / PaaS)  
+**Mata Kuliah:** Internet Programming II\
+**Kelompok:** Ihsan (Architect), Fery (AI/Data), Jojo (Backend), Farel
+(Analyst/QA)\
+**Backend:** Django 5.x + Django REST Framework\
+**Database:** PostgreSQL\
+**Authentication:** JWT (SimpleJWT)\
+**Status:** Draft / Design Contract
 
----
+------------------------------------------------------------------------
 
-## Endpoint Feature 1 — CV vs Job Requirement Matching   **VALIDATED (PoC Colab)**
+## 1. Tujuan API
 
-### `POST /api/v1/match-job`
-**Content-Type:** `multipart/form-data`  
+REST API digunakan sebagai penghubung antara frontend dengan backend
+ICM. Backend menangani:
 
-| Field        | Type | Description |
-|--------------|------|-------------|
-| `cv_file`    | File (PDF) | Curriculum Vitae kandidat |
-| `job_file`   | File (PDF) | Job Requirement / Lowongan pekerjaan |
+1.  autentikasi pengguna;
+2.  upload dan pemrosesan CV;
+3.  analisis kecocokan CV dengan lowongan;
+4.  rekomendasi career/IT role;
+5.  penyimpanan hasil analisis pada PostgreSQL.
 
----
+Arsitektur utama:
 
-### Response JSON (Contoh Nyata dari PoC Colab)
+``` text
+React Frontend
+      |
+      | HTTP/JSON + multipart/form-data
+      v
+Django 5 + Django REST Framework
+      |
+      +---- Authentication / JWT
+      |
+      +---- CV Processing
+      |
+      +---- AI Engine
+      |       +-- Feature 1: CV vs Job Matching
+      |       +-- Feature 2: Career Recommendation
+      |
+      v
+PostgreSQL
+```
 
-```json
+**Catatan:** REST API adalah gaya/arsitektur komunikasi. Implementasi
+API proyek ini menggunakan Django REST Framework, bukan FastAPI.
+
+------------------------------------------------------------------------
+
+# 2. Stack Backend
+
+  Komponen         Teknologi
+  ---------------- ----------------------------------------
+  Framework        Django 5.x
+  REST API         Django REST Framework
+  Bahasa           Python 3.11+
+  Authentication   SimpleJWT
+  Database         PostgreSQL
+  PDF Processing   PyMuPDF (`fitz`)
+  OCR              Tesseract OCR
+  AI Feature 1     SentenceTransformer `all-MiniLM-L6-v2`
+  AI Feature 2     TF-IDF + Logistic Regression
+  API Format       JSON
+  File Upload      `multipart/form-data`
+  Testing          pytest + pytest-django
+  Deployment       Gunicorn + Nginx / cloud
+
+------------------------------------------------------------------------
+
+# 3. Standar Response API
+
+## 3.1 Success Response
+
+Seluruh endpoint menggunakan struktur:
+
+``` json
+{
+  "status": "success",
+  "data": {}
+}
+```
+
+Contoh:
+
+``` json
+{
+  "status": "success",
+  "data": {
+    "message": "Registrasi berhasil.",
+    "user": {
+      "id": 1,
+      "username": "jojo",
+      "email": "jojo@example.com"
+    }
+  }
+}
+```
+
+## 3.2 Error Response
+
+``` json
+{
+  "status": "error",
+  "error": {
+    "code": "VALIDATION_ERROR",
+    "message": "username, email, dan password wajib diisi.",
+    "details": null
+  }
+}
+```
+
+------------------------------------------------------------------------
+
+# 4. Authentication API
+
+Authentication merupakan bagian backend foundation dan sudah
+diimplementasikan pada M5.
+
+## 4.1 Register
+
+### `POST /api/auth/register/`
+
+**Content-Type:** `application/json`
+
+### Request
+
+``` json
+{
+  "username": "jojo",
+  "email": "jojo@example.com",
+  "password": "Password123!"
+}
+```
+
+### Response --- 201 Created
+
+``` json
+{
+  "status": "success",
+  "data": {
+    "message": "Registrasi berhasil.",
+    "user": {
+      "id": 1,
+      "username": "jojo",
+      "email": "jojo@example.com"
+    }
+  }
+}
+```
+
+### Error
+
+Username sudah digunakan:
+
+``` json
+{
+  "status": "error",
+  "error": {
+    "code": "USERNAME_ALREADY_EXISTS",
+    "message": "Username sudah digunakan.",
+    "details": null
+  }
+}
+```
+
+Email sudah digunakan:
+
+``` json
+{
+  "status": "error",
+  "error": {
+    "code": "EMAIL_ALREADY_EXISTS",
+    "message": "Email sudah digunakan.",
+    "details": null
+  }
+}
+```
+
+------------------------------------------------------------------------
+
+## 4.2 Login
+
+### `POST /api/auth/login/`
+
+**Content-Type:** `application/json`
+
+### Request
+
+``` json
+{
+  "username": "jojo",
+  "password": "Password123!"
+}
+```
+
+### Response --- 200 OK
+
+``` json
+{
+  "status": "success",
+  "data": {
+    "refresh": "<JWT_REFRESH_TOKEN>",
+    "access": "<JWT_ACCESS_TOKEN>"
+  }
+}
+```
+
+### Error --- 401 Unauthorized
+
+``` json
+{
+  "status": "error",
+  "error": {
+    "code": "AUTHENTICATION_FAILED",
+    "message": "Username atau password salah.",
+    "details": null
+  }
+}
+```
+
+------------------------------------------------------------------------
+
+## 4.3 Current User
+
+### `GET /api/auth/me/`
+
+**Authentication:** Bearer JWT
+
+### Header
+
+``` text
+Authorization: Bearer <ACCESS_TOKEN>
+```
+
+### Response --- 200 OK
+
+``` json
+{
+  "status": "success",
+  "data": {
+    "id": 1,
+    "username": "jojo",
+    "email": "jojo@example.com"
+  }
+}
+```
+
+------------------------------------------------------------------------
+
+# 5. Resume API
+
+## 5.1 Upload CV
+
+### `POST /api/resumes/upload/`
+
+**Authentication:** Bearer JWT\
+**Content-Type:** `multipart/form-data`
+
+### Request
+
+  Field                 Type     Keterangan
+  --------------------- -------- ---------------------------------
+  `cv_file`             File     File CV kandidat
+  `original_filename`   String   Nama file asli, bila diperlukan
+
+Format yang direncanakan:
+
+-   PDF
+-   JPG
+-   PNG
+
+Batas ukuran file: **10 MB**.
+
+### Response --- Rencana
+
+``` json
+{
+  "status": "success",
+  "data": {
+    "id": "uuid",
+    "original_filename": "cv_jojo.pdf",
+    "message": "CV berhasil diupload."
+  }
+}
+```
+
+**Status:** Endpoint dikembangkan pada tahap CV Processing. Kontrak
+dapat disesuaikan ketika implementasi final dibuat.
+
+------------------------------------------------------------------------
+
+# 6. Feature 1 --- CV vs Job Requirement Matching
+
+Feature 1 membandingkan CV kandidat dengan Job Requirement menggunakan
+beberapa komponen:
+
+-   semantic similarity;
+-   skill matching;
+-   experience analysis;
+-   education analysis.
+
+Model semantic menggunakan:
+
+`sentence-transformers/all-MiniLM-L6-v2`
+
+Embedding berdimensi 384.
+
+## 6.1 Endpoint
+
+### `POST /api/analyze/cv-match/`
+
+**Authentication:** Bearer JWT\
+**Content-Type:** `multipart/form-data`
+
+### Request
+
+  Field         Type     Keterangan
+  ------------- -------- -------------------------------------------
+  `resume_id`   UUID     ID CV yang sudah diupload
+  `job_file`    File     Job Requirement
+  `job_text`    String   Alternatif Job Requirement berbentuk teks
+
+Implementasi final dapat menggunakan `resume_id` + `job_file` agar CV
+tidak perlu dikirim berulang kali.
+
+------------------------------------------------------------------------
+
+## 6.2 Response
+
+``` json
 {
   "status": "success",
   "data": {
@@ -64,13 +363,7 @@
     "experience_analysis": {
       "cv_explicit_experience": "Fresh graduate dengan project & internship",
       "required_experience": "2 tahun",
-      "status": "Fresh graduate accepted with project/portfolio evidence",
-      "date_ranges_detected": [
-        "juni 2026 – agustus 2026",
-        "januari 2026 – maret 2026",
-        "september 2025 – desember 2025",
-        "2022 – 2026"
-      ]
+      "status": "Fresh graduate accepted with project/portfolio evidence"
     },
     "education_analysis": {
       "cv_education_level": 2,
@@ -87,217 +380,429 @@
 }
 ```
 
----
+## 6.3 Komponen Scoring
 
-### Penjelasan Skor (dari PoC)
-| Komponen | Metode | Bobot (Contoh) |
-|----------|--------|----------------|
-| **Semantic Score** | Cosine similarity embedding (CV vs JD) | 30% |
-| **Skill Score** | Jaccard / fuzzy match skill dictionary | 30% |
-| **Experience Score** | Rule-based (tahun, fresher vs senior) | 20% |
-| **Education Score** | Rule-based (jenjang + bidang studi) | 20% |
-| **TOTAL** | Weighted sum | 100% |
+Bobot final mengikuti hasil validasi AI yang digunakan pada laporan
+proyek. Jika bobot mengalami perubahan setelah eksperimen, dokumentasi
+harus diperbarui.
 
-> **Catatan:** Bobot akhir akan disepakati Minggu 2 setelah eksperimen lebih lanjut.
+  Komponen              Metode
+  --------------------- -----------------------------
+  Semantic Score        Cosine similarity embedding
+  Skill Score           Skill matching
+  Experience Score      Rule-based analysis
+  Education Score       Rule-based analysis
+  Compatibility Score   Weighted sum
 
----
+**Catatan:** Compatibility Score adalah nilai kecocokan CV terhadap job
+requirement, bukan akurasi model.
 
-## Endpoint Feature 2 — Career Recommendation (CV Only)   **DALAM PENGEMBANGAN (Minggu 2)**
+------------------------------------------------------------------------
 
-### `POST /api/v1/analyze-cv`
-**Content-Type:** `multipart/form-data`  
+# 7. Feature 2 --- Career Recommendation
 
-| Field     | Type | Description |
-|-----------|------|-------------|
-| `cv_file` | File (PDF) | Curriculum Vitae kandidat (tanpa Job Requirement) |
+Feature 2 menganalisis CV tanpa membutuhkan Job Requirement tertentu.
 
----
+AI digunakan untuk menentukan rekomendasi role IT berdasarkan isi CV.
 
-### Response JSON — **SPEC TENTATIF** (akan final setelah PoC Minggu 2)
+Metode utama:
 
-```json
+-   TF-IDF;
+-   Logistic Regression;
+-   top-3 role recommendation;
+-   skill gap analysis.
+
+## 7.1 Endpoint
+
+### `POST /api/recommend/career/`
+
+**Authentication:** Bearer JWT\
+**Content-Type:** `multipart/form-data`
+
+### Request
+
+  Field         Type   Keterangan
+  ------------- ------ -----------------------
+  `resume_id`   UUID   ID CV yang dianalisis
+
+------------------------------------------------------------------------
+
+## 7.2 Response
+
+Struktur final akan mengikuti hasil implementasi Feature 2.
+
+Contoh:
+
+``` json
 {
   "status": "success",
   "data": {
-    "profile_summary": {
-      "name": "Kesha Amelia Prasetyo",
-      "target_role": "Mobile Developer / Flutter Developer",
-      "email": "kesha.amelia@email.com",
-      "phone": "+62813-9876-5432",
-      "linkedin": "linkedin.com/in/keshaamelia",
-      "github": "github.com/keshaamelia",
-      "location": "Bandung, Indonesia"
-    },
-    "dominant_category": "Mobile Development",
-    "recommended_roles": [
+    "dominant_category": "Software Development",
+    "profile_summary": {},
+    "detected_skills": {},
+    "top_roles": [
       {
-        "role": "Mobile Developer Android",
-        "match_score": 92.5,
-        "matched_skills": ["Kotlin", "Android SDK", "Firebase", "REST API"],
-        "missing_skills": ["Jetpack Compose", "CI/CD Mobile"]
+        "rank": 1,
+        "role_title": "Full Stack Developer",
+        "match_percentage": 92.50,
+        "category": "Software Development",
+        "salary_range": "Rp ..."
       },
       {
-        "role": "Mobile Developer iOS",
-        "match_score": 78.0,
-        "matched_skills": ["Swift", "Firebase", "REST API"],
-        "missing_skills": ["SwiftUI", "Xcode", "App Store Connect"]
+        "rank": 2,
+        "role_title": "Backend Developer",
+        "match_percentage": 87.20,
+        "category": "Software Development",
+        "salary_range": "Rp ..."
       },
       {
-        "role": "Full Stack Developer",
-        "match_score": 71.2,
-        "matched_skills": ["JavaScript", "React Native", "Firebase", "SQL", "Git"],
-        "missing_skills": ["Node.js", "Docker", "Kubernetes"]
+        "rank": 3,
+        "role_title": "DevOps Engineer",
+        "match_percentage": 79.40,
+        "category": "DevOps",
+        "salary_range": "Rp ..."
       }
     ],
-    "detected_skills": {
-      "programming": ["Dart", "Kotlin", "Swift", "JavaScript", "SQL"],
-      "frameworks": ["Flutter", "React Native", "Firebase", "Provider", "Riverpod", "GetX", "BLoC"],
-      "databases": ["SQLite", "PostgreSQL", "MongoDB", "Firebase Firestore"],
-      "tools_cloud": ["Git", "CI/CD (GitHub Actions, Codemagic)", "Google Play Console", "Firebase Console"],
-      "soft_skills": ["Agile/Scrum", "Problem Solving", "Teamwork"]
-    },
-    "skill_gap_analysis": {
-      "critical_missing": ["Jetpack Compose", "SwiftUI", "Kubernetes"],
-      "recommended_learning_path": [
-        "Jetpack Compose (Modern Android UI)",
-        "CI/CD untuk Mobile (Codemagic / GitHub Actions)",
-        "Arsitektur Clean / Modular di Flutter"
-      ]
-    },
-    "education": [
-      {
-        "institution": "Universitas Bina Cendekia",
-        "degree": "S1 Teknik Informatika",
-        "period": "2022 – 2026",
-        "gpa": "3.80/4.00",
-        "thesis": "Implementasi Arsitektur Clean Architecture pada Aplikasi Pemesanan Transportasi Real-Time"
-      }
-    ],
-    "experience": [
-      {
-        "company": "PT Nusantara Digital Kreatif",
-        "role": "Junior Mobile Developer (Internship)",
-        "period": "Juli 2025 – September 2025",
-        "highlights": [
-          "Push notification & UI Flutter",
-          "Agile/Scrum rituals"
-        ]
-      }
-    ],
-    "projects": [
-      {
-        "name": "Aplikasi E-Commerce \"BelanjaYuk\"",
-        "role": "Mobile Developer",
-        "period": "April 2026 – Agustus 2026",
-        "tech_stack": ["Flutter", "BLoC", "Midtrans", "Firebase Auth"],
-        "description": "Aplikasi e-commerce lintas platform dengan payment gateway Midtrans dan autentikasi Firebase."
-      },
-      {
-        "name": "Aplikasi Manajemen Keuangan 'AturDuit'",
-        "role": "Mobile Developer",
-        "period": "Oktober 2025 – Januari 2026",
-        "tech_stack": ["Flutter", "SQLite", "Cloud Sync"],
-        "description": "Aplikasi pencatat keuangan 500+ active users, optimasi render 40%, offline-first dengan SQLite."
-      }
-    ],
-    "certifications": [
-      "Dicoding Indonesia: Flutter Developer Expert & Multi-Platform App (2026)",
-      "Google Cloud Skills Boost: Associate Android Developer Path (2026)"
-    ]
+    "learning_path": {}
   }
 }
 ```
 
----
+**Catatan:** `match_percentage` merupakan nilai rekomendasi/kecocokan
+role, bukan probabilitas seseorang akan diterima kerja.
 
-## Rencana Pengembangan Feature 2 (Minggu 2)
+------------------------------------------------------------------------
 
-| Tahap | Deskripsi | Output |
-|-------|-----------|--------|
-| **2.1** | **Expand Kamus Skill** — sinkronkan `KAMUS_SKILL` dengan `skills_database.json` (120+ skill, 11 kategori) | Coverage skill ≥ 90% pada CV test |
-| **2.2** | **Parser Project & Sertifikasi** — deteksi header "Nama Proyek — Peran", "Nama Sertifikasi — Penerbit — Tahun" | Entri `proyek_1`, `proyek_2`, `sertifikasi_1` terstruktur |
-| **2.3** | **Ekstrak Identitas** dari section `unclassified` (nama, target_role, kontak, LinkedIn, GitHub) | Field `profile_summary` terisi otomatis |
-| **2.4** | **Role Classifier** — TF-IDF / Embedding similarity vs `job_roles.csv` + `training_data.csv` (10k rows) | `recommended_roles` dengan `match_score` |
-| **2.5** | **Gap Analysis & Learning Path** — bandingkan skill kandidat vs skill top-3 role | `skill_gap_analysis` + `recommended_learning_path` |
-| **2.6** | **Validasi Kuantitatif** — evaluasi pada `test_resumes.json` (8 CV) + sample `training_data.csv` | Precision / Recall / F1 per role |
-| **2.7** | **Finalisasi Spec & Contoh Response** — update file ini dengan data real PoC | `docs/api_spec_draft.md` (Feature 2 validated) |
+# 8. History API
 
----
+## 8.1 Analysis History
 
-## Error Response Standar (Kedua Endpoint)
+### `GET /api/results/history/`
 
-```json
+**Authentication:** Bearer JWT
+
+Endpoint digunakan untuk mengambil riwayat analisis milik user yang
+sedang login.
+
+Contoh response:
+
+``` json
+{
+  "status": "success",
+  "data": {
+    "results": []
+  }
+}
+```
+
+------------------------------------------------------------------------
+
+## 8.2 Detail Analysis
+
+### `GET /api/results/<id>/`
+
+**Authentication:** Bearer JWT
+
+Digunakan untuk mengambil detail satu hasil analisis berdasarkan ID.
+
+------------------------------------------------------------------------
+
+# 9. Database Model
+
+Backend menggunakan PostgreSQL.
+
+Model utama:
+
+``` text
+User
+ │
+ ├── Resume
+ │     │
+ │     └── JobMatch
+ │
+ └── CareerRecommendation
+         │
+         └── TopRole
+
+JobRole
+```
+
+### Resume
+
+Menyimpan:
+
+-   user;
+-   file CV;
+-   nama file;
+-   extracted text;
+-   parsed sections;
+-   waktu upload.
+
+### JobMatch
+
+Menyimpan:
+
+-   user;
+-   resume;
+-   job requirement;
+-   compatibility score;
+-   semantic score;
+-   skill score;
+-   experience score;
+-   education score;
+-   matched skills;
+-   missing skills;
+-   recommendations.
+
+### CareerRecommendation
+
+Menyimpan:
+
+-   user;
+-   resume;
+-   dominant category;
+-   profile summary;
+-   detected skills;
+-   learning path.
+
+### TopRole
+
+Menyimpan:
+
+-   recommendation;
+-   role title;
+-   match percentage;
+-   rank;
+-   salary range;
+-   category.
+
+### JobRole
+
+Menyimpan database role IT:
+
+-   role title;
+-   category;
+-   description;
+-   required skills;
+-   salary range.
+
+------------------------------------------------------------------------
+
+# 10. Error Response
+
+Standar error API:
+
+``` json
 {
   "status": "error",
   "error": {
-    "code": "INVALID_FILE_TYPE",
-    "message": "File harus berformat PDF",
-    "details": "Received: image/png"
+    "code": "ERROR_CODE",
+    "message": "Penjelasan error.",
+    "details": null
   }
 }
 ```
 
-| HTTP Code | Kode Error | Keterangan |
-|-----------|------------|------------|
-| 400 | `INVALID_FILE_TYPE` | Bukan PDF |
-| 400 | `EMPTY_PDF_TEXT` | PDF scan tanpa text layer & OCR gagal |
-| 413 | `FILE_TOO_LARGE` | > 10 MB |
-| 500 | `AI_ENGINE_ERROR` | Gagal inference model |
-| 503 | `SERVICE_UNAVAILABLE` | Model loading / maintenance |
+Error yang direncanakan:
 
----
+    HTTP Kode                      Keterangan
+  ------ ------------------------- ----------------------------------
+     400 `VALIDATION_ERROR`        Input tidak valid
+     400 `INVALID_FILE_TYPE`       Format file tidak didukung
+     400 `EMPTY_PDF_TEXT`          Teks CV tidak berhasil diekstrak
+     401 `AUTHENTICATION_FAILED`   Login gagal / token tidak valid
+     403 `PERMISSION_DENIED`       User tidak memiliki akses
+     404 `NOT_FOUND`               Resource tidak ditemukan
+     413 `FILE_TOO_LARGE`          File \> 10 MB
+     500 `AI_ENGINE_ERROR`         Gagal menjalankan AI engine
+     503 `SERVICE_UNAVAILABLE`     Service/model tidak tersedia
 
-## Catatan Implementasi (Backend Team - Minggu 5+)
+------------------------------------------------------------------------
 
-1. **Pre-load Model** saat startup (`lifespan` FastAPI) agar inference cepat.  
-2. **Background Task** untuk parsing PDF berat (`BackgroundTasks` atau Celery/Redis nanti).  
-3. **Structured Logging** request/response untuk audit & debugging.  
-4. **Unit Test** kontrak JSON dengan `pytest` + `httpx` terhadap spec ini.  
-5. **OpenAPI Docs** otomatis di `/docs` (Swagger UI) & `/redoc`.
+# 11. Testing
 
----
+Automated testing menggunakan:
 
-## Referensi Dataset & Model
-- `job_roles.csv` — 324 peran IT, skill, pendidikan, pengalaman, gaji  
-- `skills_database.json` — 120+ skill terkategori (11 kategori)  
-- `training_data.csv` — 10.000+ resume berlabel untuk klasifikasi role  
-- `test_resumes.json` — 8 CV sintetis untuk validasi akhir  
-- Model embedding: `sentence-transformers/all-MiniLM-L6-v2` (384-dim, CPU-friendly)
+-   pytest;
+-   pytest-django;
+-   Django REST Framework APIClient.
 
----
+Authentication telah divalidasi dengan 5 test:
 
-## Versi & History
-| Versi | Tanggal | Penulis | Perubahan |
-|-------|---------|---------|-----------|
-| 0.1   | Minggu 1 | Jojo (Backend) | Draft awal: Feature 1 validated, Feature 2 TBD |
-| 0.2   | Minggu 2 | Fery (AI) + Jojo | Update Feature 2 setelah PoC lengkap |
+1.  Register berhasil;
+2.  Register dengan username duplikat;
+3.  Login berhasil;
+4.  Login dengan password salah;
+5.  Akses `/api/auth/me/` menggunakan JWT.
 
----
-sequenceDiagram
-    participant Client
-    participant FastAPI as FastAPI Backend
-    participant AI as AI Engine (SentenceTransformer)
-    participant DB as Database (PostgreSQL)
+Status pengujian M5:
 
-    Client->>FastAPI: POST /api/v1/match-job (cv_file, job_file)
-    FastAPI->>FastAPI: Validasi file (PDF, <10MB)
-    FastAPI->>AI: extract_text(cv_file) → text_cv
-    FastAPI->>AI: extract_text(job_file) → text_job
-    FastAPI->>AI: encode(text_cv) → emb_cv
-    FastAPI->>AI: encode(text_job) → emb_job
-    FastAPI->>AI: cosine_similarity(emb_cv, emb_job) → semantic_score
-    FastAPI->>AI: extract_skills(text_cv, text_job) → matched/missing
-    FastAPI->>FastAPI: hitung experience & education score
-    FastAPI->>FastAPI: weighted_sum → compatibility_score
-    FastAPI->>DB: simpan riwayat analisis (opsional)
-    FastAPI-->>Client: JSON Response (spec di atas)
+``` text
+5 passed
+```
 
+Test selanjutnya akan ditambahkan untuk:
 
-> Catatan:
-> - Model embedding di-load sekali saat startup (lifespan FastAPI).
-> - PDF parsing & inference berat bisa dipindah ke BackgroundTasks / Celery nanti (Fase 2).
-> - Feature 2 (/api/v1/analyze-cv) alurnya sama, hanya tanpa job_file dan tambah role-classifier step.
+-   CV upload;
+-   file validation;
+-   Feature 1;
+-   Feature 2;
+-   authorization;
+-   result history.
 
+------------------------------------------------------------------------
 
-> **File ini adalah kontrak desain (Design Contract).**  
-> Setiap perubahan breaking-change pada field/structure wajib update versi & diskusi tim terlebih dahulu.
+# 12. Alur Request Feature 1
+
+``` text
+Client
+  |
+  | POST /api/analyze/cv-match/
+  | resume_id + job_file
+  v
+Django REST Framework
+  |
+  +--> Authentication / JWT
+  |
+  +--> Validasi request & file
+  |
+  +--> Ambil Resume
+  |
+  +--> Extract / normalize text
+  |
+  +--> AI Engine
+  |      |
+  |      +--> SentenceTransformer
+  |      +--> Semantic Score
+  |      +--> Skill Matching
+  |      +--> Experience Analysis
+  |      +--> Education Analysis
+  |      +--> Compatibility Score
+  |
+  +--> Simpan JobMatch
+  |
+  v
+JSON Response
+  |
+  v
+Client / React Dashboard
+```
+
+------------------------------------------------------------------------
+
+# 13. Alur Request Feature 2
+
+``` text
+Client
+  |
+  | POST /api/recommend/career/
+  | resume_id
+  v
+Django REST Framework
+  |
+  +--> Authentication / JWT
+  |
+  +--> Ambil Resume
+  |
+  +--> Extract / normalize text
+  |
+  +--> AI Engine
+  |      |
+  |      +--> TF-IDF
+  |      +--> Logistic Regression
+  |      +--> Top-3 Role
+  |      +--> Skill Gap
+  |      +--> Learning Path
+  |
+  +--> Simpan CareerRecommendation
+  |
+  v
+JSON Response
+  |
+  v
+Client / React Dashboard
+```
+
+------------------------------------------------------------------------
+
+# 14. Keamanan API
+
+Implementasi backend menggunakan:
+
+-   JWT authentication;
+-   password hashing bawaan Django;
+-   permission `IsAuthenticated` untuk endpoint yang membutuhkan user;
+-   validasi input;
+-   validasi tipe dan ukuran file;
+-   pembatasan akses data berdasarkan user.
+
+Token tidak disimpan sebagai password atau data plaintext pada database.
+
+------------------------------------------------------------------------
+
+# 15. Referensi Dataset & Model
+
+-   `job_roles.csv` --- database role IT;
+-   `skills_database.json` --- kamus skill;
+-   `training_data.csv` --- dataset training role classifier;
+-   `test_resumes.json` --- data validasi;
+-   `sentence-transformers/all-MiniLM-L6-v2` --- model embedding Feature
+    1.
+
+Detail jumlah data, metrik evaluasi, dan hasil eksperimen mengikuti
+laporan AI/PoC tim dan dapat diperbarui setelah validasi final.
+
+------------------------------------------------------------------------
+
+# 16. Status Pengembangan
+
+  Komponen                           Status
+  ---------------------------------- ----------------------
+  Django 5.x + virtual environment   Selesai
+  PostgreSQL                         Selesai
+  Database models                    Selesai
+  Migrations                         Selesai
+  JWT Register                       Selesai
+  JWT Login                          Selesai
+  `/api/auth/me/`                    Selesai
+  Standard success response          Selesai
+  Standard error response            Selesai
+  Automated authentication test      Selesai --- 5 passed
+  Resume upload                      Tahap pengembangan
+  CV Processing / OCR                Tahap pengembangan
+  Feature 1                          Tahap pengembangan
+  Feature 2                          Tahap pengembangan
+  Frontend integration               Tahap berikutnya
+  Deployment                         Tahap akhir
+
+------------------------------------------------------------------------
+
+# 17. Versi & History
+
+  -----------------------------------------------------------------------
+  Versi             Tahap             Penulis           Perubahan
+  ----------------- ----------------- ----------------- -----------------
+  0.1               Minggu 1          Jojo              Draft REST API
+
+  0.2               Minggu 2          Fery + Jojo       PoC AI Feature
+                                                        1/2
+
+  0.3               M5                Jojo              Sinkronisasi API
+                                                        dengan Django +
+                                                        DRF, JWT,
+                                                        PostgreSQL,
+                                                        response schema,
+                                                        dan automated
+                                                        testing
+  -----------------------------------------------------------------------
+
+------------------------------------------------------------------------
+
+> **Design Contract**
+>
+> Dokumen ini menjadi acuan kontrak REST API antara frontend, backend,
+> dan AI engine.
+>
+> Perubahan yang mengubah nama endpoint, field, tipe data, atau struktur
+> response secara breaking-change harus diperbarui pada dokumen ini dan
+> dikomunikasikan kepada anggota tim terkait.
