@@ -11,6 +11,35 @@ body {
   z-index: 1;
 }
 
+.site-header {
+  border: 0;
+}
+
+.section-frame {
+  border: 0;
+  background-image: none;
+}
+
+.icm-header-logo {
+  position: relative;
+  display: block;
+  width: 2rem;
+  height: 2rem;
+  flex: none;
+  overflow: hidden;
+  background-color: #2563eb;
+  border-radius: 0.4rem;
+}
+
+.icm-header-logo::before {
+  position: absolute;
+  inset: 2px;
+  background-color: #fff;
+  content: "";
+  -webkit-mask: url("/static/images/icm-logo-mask.png") center / contain no-repeat;
+  mask: url("/static/images/icm-logo-mask.png") center / contain no-repeat;
+}
+
 .wave-mesh-background {
   position: fixed;
   inset: 0;
@@ -25,7 +54,7 @@ body {
   overflow: hidden;
   padding-bottom: 0;
   margin: 2rem clamp(0.75rem, 3vw, 2.5rem) 1.25rem;
-  border: 1px solid color-mix(in srgb, var(--border) 75%, transparent);
+  border: 0;
   border-radius: 1.5rem;
   background: color-mix(in srgb, var(--background) 74%, transparent);
   backdrop-filter: blur(16px);
@@ -76,15 +105,21 @@ body {
   width: 2.5rem;
   height: 2.5rem;
   place-items: center;
-  border: 1px solid color-mix(in srgb, var(--accent) 40%, var(--border));
   border-radius: 0.8rem;
-  color: var(--accent);
-  background: color-mix(in srgb, var(--accent) 10%, transparent);
+  background: #2563eb;
 }
 
 .footer-brand-mark .icon {
   width: 1.35rem;
   height: 1.35rem;
+}
+
+.footer-brand-logo {
+  width: 1.8rem;
+  height: 1.8rem;
+  background-color: #fff;
+  -webkit-mask: url("/static/images/icm-logo-mask.png") center / contain no-repeat;
+  mask: url("/static/images/icm-logo-mask.png") center / contain no-repeat;
 }
 
 .footer-brand > p {
@@ -204,7 +239,7 @@ body {
   justify-content: space-between;
   gap: 1rem;
   padding-top: 1.25rem;
-  border-top: 1px solid color-mix(in srgb, var(--border) 80%, transparent);
+  border-top: 0;
 }
 
 .site-footer-bottom > p {

@@ -142,7 +142,9 @@ export default function HoverFooter() {
         <div className="site-footer-grid">
           <section className="footer-brand" aria-label="Tentang ICM">
             <a href="/" className="footer-brand-link">
-              <span className="footer-brand-mark"><Icon name="spark" /></span>
+              <span className="footer-brand-mark" aria-hidden="true">
+                <span className="footer-brand-logo" />
+              </span>
               <span>ICM</span>
             </a>
             <p>

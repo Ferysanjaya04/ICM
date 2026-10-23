@@ -6,6 +6,7 @@ import { fileURLToPath } from "node:url";
 const frontendDir = fileURLToPath(new URL(".", import.meta.url));
 
 export default defineConfig({
+  base: "/static/dist/",
   plugins: [react()],
   build: {
     outDir: "static/dist",

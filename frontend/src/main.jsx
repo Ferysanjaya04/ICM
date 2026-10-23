@@ -102,11 +102,11 @@ function AppShell({ page, children, root }) {
   return (
     <div className="text-foreground font-x min-h-screen flex flex-col antialiased">
       <WaveMesh colors={waveColors} />
-      <header className="sticky top-0 z-40 w-full border-b border-edge bg-background/80 backdrop-blur-md">
+      <header className="site-header sticky top-0 z-40 w-full bg-background/80 backdrop-blur-md">
         <div className="flex h-14 w-full items-center justify-between gap-2 px-2 sm:px-3">
           <div className="flex items-center gap-2 min-w-0">
             <a href="/" className="flex items-center gap-2.5 shrink-0">
-              {icon("home", "nav-icon text-accent")}
+              <span className="icm-header-logo" role="img" aria-label="Logo IT Career Match" />
               <span className="font-mono text-sm font-semibold tracking-tight">ICM</span>
               <span className="badge badge-accent font-mono text-[10px] uppercase tracking-widest">AI v2.4</span>
             </a>
