@@ -98,8 +98,8 @@ export default function WaveMesh({ colors, crests = false }) {
       for (let row = 0; row < rows; row++) {
         const z = FAR * Math.pow(NEAR / FAR, row / (rows - 1));
         const fog = Math.pow(1 - (z - NEAR) / (FAR - NEAR), 1.25);
-        const dotSize = Math.max(0.8, Math.min(2.7, 2.1 / z));
-        ctx.fillStyle = `rgba(${dotColor},${(0.04 + fog * 0.38).toFixed(3)})`;
+        const dotSize = Math.max(0.9, Math.min(3, 2.3 / z));
+        ctx.fillStyle = `rgba(${dotColor},${(0.22 + fog * 0.68).toFixed(3)})`;
 
         for (let column = 0; column < columns; column++) {
           const x = -halfWidth + (column / (columns - 1)) * halfWidth * 2;
@@ -117,8 +117,8 @@ export default function WaveMesh({ colors, crests = false }) {
       }
 
       for (let index = 0; index < highlightedPoints.length; index += 4) {
-        ctx.fillStyle = `rgba(${accentColor},${(0.12 + highlightedPoints[index + 3] * 0.45).toFixed(3)})`;
-        const dotSize = highlightedPoints[index + 2] * 1.1;
+        ctx.fillStyle = `rgba(${accentColor},${(0.32 + highlightedPoints[index + 3] * 0.64).toFixed(3)})`;
+        const dotSize = highlightedPoints[index + 2] * 1.12;
         ctx.fillRect(
           highlightedPoints[index] - dotSize / 2,
           highlightedPoints[index + 1] - dotSize / 2,
