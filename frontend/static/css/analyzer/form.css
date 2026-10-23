@@ -1,0 +1,8 @@
+/* Analyzer feature styles: drop-zone upload. Loaded only on analyzer/form.html. */
+.drop-zone {
+  border: 1px dashed var(--border); border-radius: 0.75rem;
+  padding: 2rem 1.5rem; text-align: center; cursor: pointer;
+  background: var(--card); transition: border-color 0.2s, background 0.2s;
+}
+.drop-zone:hover, .drop-zone.drag-active { border-color: var(--accent); background: var(--secondary); }
+.drop-zone.has-file { border-style: solid; border-color: var(--accent); }

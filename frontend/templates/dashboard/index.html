@@ -1,0 +1,7 @@
+{% extends "shared/base.html" %}
+{% block title %}Dashboard — ICM{% endblock %}
+{% block page_name %}dashboard{% endblock %}
+{% block page_data %}
+{{ stats|json_script:"icm-stats" }}
+{{ analyses|json_script:"icm-analyses" }}
+{% endblock %}

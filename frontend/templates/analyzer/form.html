@@ -1,0 +1,9 @@
+{% extends "shared/base.html" %}
+{% block title %}Analyzer — ICM{% endblock %}
+{% block page_name %}analyzer{% endblock %}
+{% block page_data %}
+<div id="icm-form-errors" hidden>
+  <div data-field="cv_file">{% for error in cv_form.cv_file.errors %}{{ error }} {% endfor %}</div>
+  <div data-field="job_description" data-value="{{ job_form.job_description.value|default_if_none:'' }}">{% for error in job_form.job_description.errors %}{{ error }} {% endfor %}</div>
+</div>
+{% endblock %}

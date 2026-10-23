@@ -1,0 +1,8 @@
+{% extends "shared/base.html" %}
+{% block title %}Sign In — ICM{% endblock %}
+{% block page_name %}login{% endblock %}
+{% block page_data %}
+<div id="icm-form-errors" hidden>
+  {% for field in form %}<div data-field="{{ field.name }}" data-value="{{ field.value|default_if_none:'' }}">{% for error in field.errors %}{{ error }} {% endfor %}</div>{% endfor %}
+</div>
+{% endblock %}

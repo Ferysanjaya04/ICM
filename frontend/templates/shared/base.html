@@ -1,0 +1,58 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="id" class="dark">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>{% block title %}ICM — IT Career CV Analyzer{% endblock %}</title>
+  <script>
+    (function(){try{var t=localStorage.getItem('icm-theme');if(t==='light'){document.documentElement.classList.remove('dark');}else{document.documentElement.classList.add('dark');}}catch(e){document.documentElement.classList.add('dark');}})();
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin=""/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            background: "var(--background)", foreground: "var(--foreground)", primary: "var(--primary)",
+            "primary-foreground": "var(--primary-foreground)", secondary: "var(--secondary)",
+            "secondary-foreground": "var(--secondary-foreground)", muted: "var(--muted)",
+            "muted-foreground": "var(--muted-foreground)", card: "var(--card)",
+            "card-foreground": "var(--card-foreground)", popover: "var(--popover)",
+            accent: "var(--accent)", "accent-foreground": "var(--accent-foreground)",
+            border: "var(--border)", edge: "var(--edge)", input: "var(--input)", ring: "var(--ring)",
+            success: "var(--success)", destructive: "var(--destructive)",
+          },
+          fontFamily: { x: ["Inter", "sans-serif"], mono: ["JetBrains Mono", "monospace"] }
+        }
+      }
+    };
+  </script>
+  <link rel="stylesheet" href="{% static 'css/shared/main.css' %}"/>
+  <link rel="stylesheet" href="{% static 'dist/icm.css' %}"/>
+  {% block extra_head %}{% endblock %}
+</head>
+<body class="bg-background text-foreground font-x min-h-screen flex flex-col antialiased">
+  {% include "shared/icons.html" %}
+  <div id="scroll-progress" aria-hidden="true"></div>
+  <div class="grain" aria-hidden="true" role="presentation"></div>
+  {% if messages %}
+  <div id="icm-messages" hidden>
+    {% for message in messages %}<div data-level="{{ message.tags }}">{{ message }}</div>{% endfor %}
+  </div>
+  {% endif %}
+  <div id="icm-root" data-page="{% block page_name %}home{% endblock %}"
+    data-authenticated="{{ user.is_authenticated|yesno:'true,false' }}"
+    data-username="{{ user.username }}" data-csrf="{{ csrf_token }}"
+    data-mode="{% if request.POST.mode == 'career' or request.GET.mode == 'career' %}career{% else %}match{% endif %}"></div>
+  <div id="icm-csrf-token" hidden>{% csrf_token %}</div>
+  {% block page_data %}{% endblock %}
+  <script type="module" src="https://unpkg.com/@splinetool/viewer@1.9.28/build/spline-viewer.js"></script>
+  <script src="{% static 'js/api.js' %}"></script>
+  <script type="module" src="{% static 'dist/icm.js' %}"></script>
+</body>
+</html>

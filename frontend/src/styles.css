@@ -1,0 +1,319 @@
+@import url("../static/css/auth/auth.css");
+@import url("../static/css/analyzer/form.css");
+@import url("../static/css/analyzer/result.css");
+
+body {
+  background: #101318;
+}
+
+#icm-root {
+  position: relative;
+  z-index: 1;
+}
+
+.wave-mesh-background {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.site-footer {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  padding-bottom: 0;
+  margin: 2rem clamp(0.75rem, 3vw, 2.5rem) 1.25rem;
+  border: 1px solid color-mix(in srgb, var(--border) 75%, transparent);
+  border-radius: 1.5rem;
+  background: color-mix(in srgb, var(--background) 74%, transparent);
+  backdrop-filter: blur(16px);
+}
+
+.site-footer-content {
+  position: relative;
+  z-index: 1;
+  width: min(100%, 88rem);
+  margin-inline: auto;
+  padding: clamp(1.5rem, 4vw, 3.5rem);
+}
+
+.footer-background-gradient {
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(125% 95% at 50% 0%, transparent 43%, color-mix(in srgb, var(--accent) 12%, transparent) 100%);
+}
+
+.site-footer-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) repeat(3, minmax(0, 1fr));
+  gap: clamp(1.5rem, 3.5vw, 3.5rem);
+  padding-bottom: 2rem;
+}
+
+.footer-brand,
+.footer-link-section,
+.footer-info {
+  min-width: 0;
+}
+
+.footer-brand-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: var(--foreground);
+  font-size: 1.75rem;
+  font-weight: 750;
+  letter-spacing: -0.05em;
+  text-decoration: none;
+}
+
+.footer-brand-mark {
+  display: grid;
+  width: 2.5rem;
+  height: 2.5rem;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--accent) 40%, var(--border));
+  border-radius: 0.8rem;
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+}
+
+.footer-brand-mark .icon {
+  width: 1.35rem;
+  height: 1.35rem;
+}
+
+.footer-brand > p {
+  max-width: 24rem;
+  margin-top: 1rem;
+  color: var(--muted-foreground);
+  font-size: 0.875rem;
+  line-height: 1.75;
+}
+
+.footer-about-link,
+.footer-contact-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: 1rem;
+  color: var(--accent);
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.footer-about-link:hover,
+.footer-contact-link:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.footer-link-section h2,
+.footer-info h2 {
+  margin: 0 0 1rem;
+  color: var(--foreground);
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.footer-link-section ul {
+  display: grid;
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.footer-link-section a {
+  color: var(--muted-foreground);
+  font-size: 0.875rem;
+  text-decoration: none;
+  transition: color 160ms ease;
+}
+
+.footer-link-section a:hover {
+  color: var(--accent);
+}
+
+.footer-info-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  margin-top: 0.85rem;
+  color: var(--muted-foreground);
+  font-size: 0.82rem;
+  line-height: 1.55;
+}
+
+.footer-info-item .icon {
+  margin-top: 0.1rem;
+  color: var(--accent);
+}
+
+.footer-wordmark-wrap {
+  height: clamp(7rem, 18vw, 13rem);
+  margin-top: 0.25rem;
+  overflow: hidden;
+}
+
+.footer-wordmark {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  cursor: default;
+  user-select: none;
+}
+
+.footer-wordmark text {
+  fill: transparent;
+  font-family: Inter, Arial, sans-serif;
+  font-size: 82px;
+  font-weight: 800;
+  letter-spacing: -6px;
+  stroke-width: 0.7px;
+  vector-effect: non-scaling-stroke;
+}
+
+.footer-wordmark-outline {
+  stroke: var(--muted-foreground);
+  transition: opacity 180ms ease;
+}
+
+.footer-wordmark-trace {
+  stroke: color-mix(in srgb, var(--accent) 75%, white);
+  stroke-dasharray: 1000;
+  stroke-width: 1.1px !important;
+}
+
+.footer-wordmark-color {
+  stroke-width: 1px !important;
+}
+
+.site-footer-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid color-mix(in srgb, var(--border) 80%, transparent);
+}
+
+.site-footer-bottom > p {
+  margin: 0;
+  color: var(--muted-foreground);
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.68rem;
+  letter-spacing: 0.04em;
+}
+
+.footer-quick-links {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.footer-quick-links a {
+  display: grid;
+  width: 2.25rem;
+  height: 2.25rem;
+  place-items: center;
+  border: 1px solid var(--border);
+  border-radius: 9999px;
+  color: var(--muted-foreground);
+  transition: color 160ms ease, border-color 160ms ease, background 160ms ease;
+}
+
+.footer-quick-links a:hover {
+  border-color: color-mix(in srgb, var(--accent) 55%, var(--border));
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+}
+
+.footer-quick-links .icon {
+  width: 1rem;
+  height: 1rem;
+}
+
+@media (max-width: 900px) {
+  .site-footer-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 560px) {
+  .site-footer {
+    margin: 1.25rem 0.65rem 0.75rem;
+    border-radius: 1.1rem;
+  }
+
+  .site-footer-content {
+    padding: 1.35rem;
+  }
+
+  .site-footer-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.75rem 1rem;
+  }
+
+  .footer-brand {
+    grid-column: 1 / -1;
+  }
+
+  .footer-wordmark-wrap {
+    height: 6.5rem;
+  }
+
+  .site-footer-bottom {
+    align-items: flex-start;
+  }
+
+  .site-footer-bottom > p {
+    max-width: 13rem;
+    line-height: 1.6;
+  }
+}
+
+[data-reveal] {
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+[data-reveal].is-visible {
+  animation: icm-reveal 500ms ease both;
+}
+
+[data-reveal][data-delay="150"] {
+  animation-delay: 150ms;
+}
+
+[data-reveal][data-delay="300"] {
+  animation-delay: 300ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-reveal] {
+    opacity: 1;
+    transform: none;
+    animation: none;
+  }
+}
+
+@keyframes icm-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

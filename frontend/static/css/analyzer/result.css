@@ -1,0 +1,6 @@
+/* Analyzer result: progress ring. Loaded only on analyzer/result.html. */
+@keyframes progress-ring { from { stroke-dashoffset: 440; } }
+.progress-ring-circle { animation: progress-ring 1.2s ease-out; }
+@media (prefers-reduced-motion: reduce) {
+  .progress-ring-circle { animation: none; }
+}
