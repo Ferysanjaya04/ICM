@@ -1,0 +1,35 @@
+{
+    "Programming": [
+        "Python", "JavaScript", "TypeScript", "SQL", "Java", "C++", "C#", "PHP", "Go", "Rust"
+    ],
+    "Web Development": [
+        "React", "Vue.js", "Angular", "HTML/CSS", "Tailwind CSS", "Bootstrap", "SASS", "Webpack"
+    ],
+    "Backend": [
+        "Node.js", "Express.js", "Django", "FastAPI", "Flask", "Spring Boot", "Laravel", "Symfony"
+    ],
+    "Database": [
+        "PostgreSQL", "MongoDB", "Redis", "MySQL", "Oracle", "Cassandra", "ElasticSearch", "DynamoDB", "NoSQL"
+    ],
+    "DevOps": [
+        "Docker", "Kubernetes", "Git", "CI/CD", "Jenkins", "GitLab CI", "GitHub Actions", "Terraform"
+    ],
+    "Cloud": [
+        "AWS", "GCP", "Google Cloud Platform", "Azure", "DigitalOcean"
+    ],
+    "API": [
+        "REST API", "RESTful API", "GraphQL", "SOAP", "WebSocket"
+    ],
+    "Methodology": [
+        "Agile", "Scrum", "Kanban", "Waterfall"
+    ],
+    "Other": [
+        "Problem Solving", "Teamwork", "Communication", "Leadership", "Microservices", "OAuth 2.0", "JWT"
+    ],
+    "Networking": [
+        "BGP", "OSPF", "EIGRP", "ISIS", "MPLS", "VPN", "VLAN", "QoS", "Routing", "Switching", "Cisco", "CCNA", "CCNP", "IOS", "Catalyst"
+    ],
+    "Cybersecurity": [
+        "SIEM", "Splunk", "ELK", "QRadar", "Nessus", "OpenVAS", "Qualys", "Penetration Testing", "Metasploit", "Burp Suite", "CEH", "OSCP", "Security+", "Incident Response", "Threat Detection"
+    ]
+}

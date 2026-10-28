@@ -59,12 +59,16 @@ class JobMatch(models.Model):
 
     experience_score = models.DecimalField(
         max_digits=5,
-        decimal_places=2
+        decimal_places=2,
+        null=True,
+        blank=True
     )
 
     education_score = models.DecimalField(
         max_digits=5,
-        decimal_places=2
+        decimal_places=2,
+        null=True,
+        blank=True
     )
 
     compatibility_level = models.CharField(
