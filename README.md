@@ -1,70 +1,117 @@
-markdown
-IT Career CV Analyzer & Recommendation Engine
+# ✦ ICM — IT Career CV Analyzer & Recommendation Engine
 
-> Platform cerdas berbasis AI dan arsitektur backend terpusat untuk menganalisis CV, mencocokkan lowongan kerja (Job Matching), serta merekomendasikan jalur karir IT terbaik bagi pengguna.
+**Your Smart Path to an IT Career 🚀**
 
+> Platform berbasis **Artificial Intelligence (AI)** yang membantu pengguna menganalisis CV, mengukur kecocokan dengan lowongan pekerjaan, dan menemukan rekomendasi karier IT yang sesuai dengan profil serta keterampilan mereka.
 
-Anggota Tim
-- Ihsan abdillah 
-- Fery sanjaya 
-- Johanes hutapea
-- M.Farel raditya
+![Django](https://img.shields.io/badge/Django-5.0-092E20?logo=django&logoColor=white)
+![Python](https://img.shields.io/badge/Python-3.11-3776AB?logo=python&logoColor=white)
+![JavaScript](https://img.shields.io/badge/JavaScript-Vanilla-F7DF1E?logo=javascript&logoColor=black)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Database-4169E1?logo=postgresql&logoColor=white)
+![Machine Learning](https://img.shields.io/badge/AI-Machine%20Learning-8B5CF6)
 
+---
 
-Arsitektur & Fitur Utama
-Proyek ini mengintegrasikan teknologi Machine Learning, NLP (*Natural Language Processing), dan arsitektur modern untuk menyelesaikan permasalahan nyata pencari kerja:
-1. Fitur 1 - AI Matching & Skill Gap Engine: Menganalisis tingkat kecocokan (Compatibility Score) antara teks CV dan deskripsi lowongan kerja (Job Description) secara semantik menggunakan Sentence Transformers, serta mendeteksi skill apa saja yang masih kurang (skill Gap).
-2. Fitur 2 - AI Job Role Classifier (Career Blueprint): Memindai keseluruhan isi CV untuk memprediksi dan membandingkan posisi IT mana yang paling akurat dengan profil kandidat, lengkap dengan analisis mendalam berbasis data dan copywriting naratif yang memotivasi.
+## ✨ Fitur Unggulan
 
+**🎯 AI CV & Job Matching**
 
-Struktur Folder Proyek
-Repository ini dikelola dengan struktur direktori standar industri:
-text
-it-career-cv-analyzer/
-│
-├── backend/            # Backend API (Centralized architecture, REST API, & AI Engine)
-│   ├── app/
-│   │   ├── api/        # Endpoint routing
-│   │   ├── core/       # Konfigurasi utama
-│   │   ├── models/     # Model database & ML model loader
-│   │   └── services/   # Logika bisnis & pengolahan AI/NLP
-│   └── requirements.txt
-│
-├── frontend/           # Antarmuka pengguna (Mobile / Web Dashboard)
-│
-├── data/               # Manajemen Dataset
-│   ├── raw/            # Dataset mentah (job_roles.csv, training_data, dll.)
-│   ├── processed/      # Model machine learning terlatih (.joblib)
-│   └── experiments/    # Notebook eksplorasi data (Jupyter/Colab)
-│
-├── docs/               # Dokumentasi Proyek
-│   └── proposal/       # Proposal dan bab laporan
-│
-├── .gitignore
+Menganalisis kecocokan CV dengan deskripsi lowongan kerja menggunakan **SentenceTransformer (`all-MiniLM-L6-v2`)** dan *Cosine Similarity*, dilengkapi compatibility score dan skill gap analysis.
+
+**🧠 AI Career Recommendation**
+
+Merekomendasikan **Top 3 karier IT** menggunakan **TF-IDF dan Logistic Regression**, lengkap dengan keterampilan yang terdeteksi dan personalized learning path.
+
+**📄 Resume Management**
+
+Upload dan kelola CV dalam format PDF atau DOCX.
+
+**🔐 Dashboard & History**
+
+Autentikasi JWT, dashboard pengguna, serta riwayat analisis dan rekomendasi karier.
+
+---
+
+## 🛠️ Tech Stack
+
+| Frontend | Backend | Database | AI / ML |
+|---|---|---|---|
+| HTML, CSS, JavaScript | Python, Django REST Framework | PostgreSQL | SentenceTransformer, TF-IDF, Logistic Regression |
+
+---
+
+## 📁 Struktur Proyek
+
+```text
+ICM/
+├── backend/           # Django REST API & AI Engine
+│   ├── accounts/
+│   ├── resumes/
+│   ├── analysis/
+│   ├── recommendations/
+│   ├── config/
+│   └── lib/
+├── frontend/          # HTML, CSS & JavaScript
+├── data/              # Dataset & ML Models
+├── docs/              # Dokumentasi
+├── requirements.txt
 └── README.md
+```
 
+---
 
+## 🚀 Quick Start
 
+**1. Clone Repository**
 
-Dataset yang Digunakan
+```bash
+git clone https://github.com/Ferysanjaya04/ICM.git
+cd ICM
+```
 
-* **`job_roles.csv`**: Basis pengetahuan (*knowledge base*) yang berisi referensi posisi pekerjaan IT beserta persyaratan keahlian, jenjang pendidikan, dan kisaran gajinya.
-* `resumes_train.jsonl` & `resumes_test.jsonl**`: Dataset latih dan uji untuk model klasifikasi peran karir.
+**2. Install Dependencies** (Python 3.11)
 
-Cara Menjalankan Proyek (Setup Lokal)
-
-1. **Clone repository ini:**
-bash
-git clone [https://github.com/Ferysanjaya04/it-career-cv-analyzer.git](https://github.com/Ferysanjaya04/it-career-cv-analyzer.git)
-cd it-career-cv-analyzer
-
-
-2. **Instal dependensi backend:**
-bash
-cd backend
+```bash
+python -m venv venv
+venv\Scripts\activate
 pip install -r requirements.txt
+```
 
+**3. Jalankan Backend**
 
+Siapkan database PostgreSQL dan konfigurasi Django terlebih dahulu.
 
+```bash
+cd backend
+python manage.py migrate
+python manage.py runserver
+```
 
-3. **Jalankan eksperimen/model** melalui file notebook yang tersedia di folder `data/experiments/` atau Google Colab.
+**4. Jalankan Frontend** (terminal baru, dari root `ICM`)
+
+```bash
+python -m http.server 5500 --bind 127.0.0.1 --directory frontend
+```
+
+Buka **http://127.0.0.1:5500/login.html**
+
+---
+
+## 👨‍💻 Development Team
+
+**Kelompok 12 — Pemrograman Internet II**
+
+- Ihsan Abdillah
+- Fery Sanjaya
+- Johannes Hutapea
+- M. Farel Raditya
+
+---
+
+<p align="center">
+  <b>✦ ICM — Discover Your Potential. Build Your IT Career.</b>
+</p>
+
+<p align="center">
+  Made with 💙 by ICM Development Team · 2026
+</p>
