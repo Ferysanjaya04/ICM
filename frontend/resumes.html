@@ -1,0 +1,153 @@
+
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0">
+
+  <title>My Resumes | ICM</title>
+
+  <link rel="stylesheet" href="./css/style.css">
+  <link rel="stylesheet" href="./css/dashboard.css">
+  <link rel="stylesheet" href="./css/resumes.css">
+</head>
+
+<body class="dashboard-page">
+
+  <div id="page-loading" class="app-loading">
+    Memeriksa sesi...
+  </div>
+
+  <main id="resumes-app"
+        class="resumes-layout"
+        hidden>
+
+    <header class="resumes-header">
+      <a href="./dashboard.html" class="resumes-brand">
+        <span>✦</span> ICM.
+      </a>
+
+      <div class="resumes-header-right">
+        <span id="current-user">Memuat akun...</span>
+        <a href="./dashboard.html" class="back-link">
+          ← Dashboard
+        </a>
+      </div>
+    </header>
+
+    <div class="resumes-container">
+
+      <div class="resumes-heading">
+        <span class="page-eyebrow">CAREER WORKSPACE</span>
+
+        <h1>My Resumes</h1>
+
+        <p>
+          Unggah dan kelola CV untuk digunakan pada
+          analisis kecocokan pekerjaan dan rekomendasi
+          karier ICM.
+        </p>
+      </div>
+
+      <div class="resumes-grid">
+
+        <section class="resume-panel">
+          <div class="panel-heading">
+            <h2>Upload New CV</h2>
+            <span class="panel-label">PDF / DOCX</span>
+          </div>
+
+          <form id="upload-form">
+            <label for="cv-file"
+                   class="upload-dropzone"
+                   id="upload-dropzone">
+
+              <span class="upload-symbol">⇧</span>
+
+              <strong>Pilih file CV</strong>
+
+              <span>
+                Klik untuk memilih dokumen PDF atau DOCX
+              </span>
+
+              <small>Maksimal 10 MB</small>
+
+              <input
+                type="file"
+                id="cv-file"
+                name="cv_file"
+                accept=".pdf,.docx"
+                required
+              >
+            </label>
+
+            <div class="selected-file"
+                 id="selected-file"
+                 hidden>
+            </div>
+
+            <div
+              id="upload-message"
+              class="resume-message"
+              role="status"
+              aria-live="polite"
+              hidden>
+            </div>
+
+            <button
+              type="submit"
+              class="btn-primary"
+              id="upload-button">
+              Upload CV
+            </button>
+          </form>
+        </section>
+
+        <section class="resume-panel">
+          <div class="panel-heading">
+            <h2>Your CV Library</h2>
+            <span class="resume-count" id="resume-count">
+              — CV
+            </span>
+          </div>
+
+          <p class="library-description">
+            Dokumen yang tercatat pada akunmu
+            di PostgreSQL.
+          </p>
+
+          <div
+            id="list-message"
+            class="resume-message"
+            role="status"
+            aria-live="polite"
+            hidden>
+          </div>
+
+          <div id="resume-list" class="resume-list">
+            <p class="empty-state">Memuat daftar CV...</p>
+          </div>
+
+          <button
+            type="button"
+            id="refresh-button"
+            class="refresh-button">
+            ↻ Refresh List
+          </button>
+        </section>
+
+      </div>
+
+      <p class="resumes-footer">
+        CV digunakan untuk Feature 1 dan Feature 2 ICM.
+        Data hanya ditampilkan kepada akun yang login.
+      </p>
+
+    </div>
+  </main>
+
+  <script src="./js/api.js"></script>
+  <script src="./js/resumes.js"></script>
+</body>
+</html>

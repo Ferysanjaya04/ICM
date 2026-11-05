@@ -78,3 +78,30 @@ class ResumeUploadView(APIView):
             },
             status_code=status.HTTP_201_CREATED,
         )
+
+class ResumeListView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        resumes = (
+            Resume.objects
+            .filter(user=request.user)
+            .order_by("-uploaded_at")
+        )
+
+        data = [
+            {
+                "id": str(resume.id),
+                "original_filename": resume.original_filename,
+                "uploaded_at": resume.uploaded_at.isoformat(),
+                "has_extracted_text": bool(
+                    resume.extracted_text.strip()
+                ),
+            }
+            for resume in resumes
+        ]
+
+        return success_response({
+            "count": len(data),
+            "resumes": data,
+        })

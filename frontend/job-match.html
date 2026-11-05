@@ -1,0 +1,266 @@
+
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0">
+  <meta name="description"
+        content="Analisis kecocokan CV dan lowongan IT dengan AI ICM">
+
+  <title>CV & Job Matching | ICM</title>
+
+  <link rel="stylesheet" href="./css/style.css">
+  <link rel="stylesheet" href="./css/dashboard.css">
+  <link rel="stylesheet" href="./css/job-match.css">
+</head>
+
+<body class="dashboard-page">
+
+  <div id="page-loading" class="app-loading">
+    Memeriksa sesi ICM...
+  </div>
+
+  <div id="job-match-app" class="job-match-layout" hidden>
+
+    <header class="match-topbar">
+      <a href="./dashboard.html" class="match-logo">
+        <span>✦</span> ICM.
+      </a>
+
+      <div class="match-topbar-right">
+        <span id="current-user">ICM Member</span>
+        <a href="./dashboard.html" class="match-back">
+          ← Dashboard
+        </a>
+      </div>
+    </header>
+
+    <main class="match-container">
+
+      <div class="match-heading">
+        <span class="match-eyebrow">AI FEATURE 01</span>
+        <h1>CV & Job Matching</h1>
+        <p>
+          Bandingkan kemampuan dalam CV dengan persyaratan
+          lowongan IT menggunakan analisis AI.
+        </p>
+      </div>
+
+      <div class="match-grid">
+
+        <section class="match-panel">
+          <div class="match-panel-header">
+            <h2>Start New Analysis</h2>
+            <span class="match-tag">SentenceTransformer</span>
+          </div>
+
+          <form id="match-form">
+
+            <div class="match-field">
+              <label for="resume-select">
+                Select Your CV
+              </label>
+
+              <select id="resume-select" required>
+                <option value="">Memuat daftar CV...</option>
+              </select>
+
+              <p class="match-field-hint">
+                Pilih CV yang sudah diunggah pada My Resumes.
+              </p>
+
+              <a href="./resumes.html" class="match-small-link">
+                + Upload CV baru
+              </a>
+            </div>
+
+            <div class="match-field">
+              <label for="job-text">
+                Job Description
+              </label>
+
+              <textarea
+                id="job-text"
+                rows="11"
+                minlength="10"
+                maxlength="30000"
+                placeholder="Contoh: We are looking for a Backend Developer with Python, Django, PostgreSQL, REST API, and Git skills. Minimum 2 years of experience and a Bachelor's degree in Computer Science..."
+                required
+              ></textarea>
+
+              <div class="match-field-footer">
+                <span>
+                  Masukkan tugas, skill, pengalaman,
+                  dan pendidikan yang dibutuhkan.
+                </span>
+                <span id="char-counter">0 / 30000</span>
+              </div>
+            </div>
+
+            <div
+              id="match-message"
+              class="match-message"
+              role="alert"
+              aria-live="polite"
+              hidden
+            ></div>
+
+            <button
+              type="submit"
+              id="analyze-button"
+              class="btn-primary"
+            >
+              Analyze Compatibility
+            </button>
+
+          </form>
+        </section>
+
+        <aside class="match-info-panel">
+          <div class="match-info-icon">✧</div>
+
+          <h2>How does it work?</h2>
+          <p>
+            ICM menganalisis kecocokan CV dengan
+            deskripsi pekerjaan berdasarkan empat komponen.
+          </p>
+
+          <div class="weight-item">
+            <span>Semantic Similarity</span>
+            <strong>25%</strong>
+          </div>
+          <div class="weight-track">
+            <div style="width:25%"></div>
+          </div>
+
+          <div class="weight-item">
+            <span>Skill Matching</span>
+            <strong>40%</strong>
+          </div>
+          <div class="weight-track">
+            <div style="width:40%"></div>
+          </div>
+
+          <div class="weight-item">
+            <span>Experience Matching</span>
+            <strong>20%</strong>
+          </div>
+          <div class="weight-track">
+            <div style="width:20%"></div>
+          </div>
+
+          <div class="weight-item">
+            <span>Education Matching</span>
+            <strong>15%</strong>
+          </div>
+          <div class="weight-track">
+            <div style="width:15%"></div>
+          </div>
+
+          <div class="match-info-note">
+            Hasil merupakan estimasi kecocokan berdasarkan
+            informasi pada CV dan lowongan, bukan jaminan
+            diterima bekerja.
+          </div>
+        </aside>
+
+      </div>
+
+      <!-- RESULT -->
+      <section id="result-section"
+               class="result-section"
+               hidden>
+
+        <div class="result-heading">
+          <div>
+            <span class="match-eyebrow">AI ANALYSIS RESULT</span>
+            <h2>Your Compatibility Report</h2>
+            <p id="result-subtitle">
+              Hasil analisis CV dengan job description.
+            </p>
+          </div>
+        </div>
+
+        <div class="result-summary">
+
+          <div class="match-panel score-panel">
+            <span class="score-label">COMPATIBILITY SCORE</span>
+
+            <div class="score-circle" id="score-circle">
+              <span id="compatibility-value">—</span>
+            </div>
+
+            <strong id="compatibility-level">
+              Menunggu hasil
+            </strong>
+
+            <p>
+              Skor keseluruhan berdasarkan empat
+              komponen yang dilaporkan dalam metode ICM.
+            </p>
+          </div>
+
+          <div class="match-panel score-details-panel">
+            <h3>Score Breakdown</h3>
+
+            <div id="score-breakdown"
+                 class="score-breakdown"></div>
+          </div>
+
+        </div>
+
+        <div class="result-details-grid">
+
+          <article class="match-panel">
+            <h3>Matched Skills</h3>
+            <p class="result-panel-description">
+              Keterampilan CV yang sesuai dengan lowongan.
+            </p>
+            <div id="matched-skills" class="skill-list"></div>
+          </article>
+
+          <article class="match-panel">
+            <h3>Missing Skills</h3>
+            <p class="result-panel-description">
+              Keterampilan yang perlu dipelajari atau
+              diperkuat berdasarkan hasil analisis.
+            </p>
+            <div id="missing-skills" class="skill-list"></div>
+          </article>
+
+        </div>
+
+        <article class="match-panel recommendations-panel">
+          <h3>AI Recommendations</h3>
+          <p class="result-panel-description">
+            Saran pengembangan berdasarkan hasil analisis.
+          </p>
+
+          <div id="match-recommendations"></div>
+        </article>
+
+        <div class="result-actions">
+          <button
+            type="button"
+            id="new-analysis-button"
+            class="secondary-button"
+          >
+            Analyze Another Job
+          </button>
+        </div>
+
+      </section>
+
+      <footer class="match-footer">
+        ICM — IT Career CV Analyzer & Recommendation Engine
+      </footer>
+
+    </main>
+  </div>
+
+  <script src="./js/api.js"></script>
+  <script src="./js/job-match.js"></script>
+
+</body>
+</html>

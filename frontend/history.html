@@ -1,0 +1,98 @@
+
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0">
+
+  <title>History | ICM Career Intelligence</title>
+
+  <link rel="stylesheet" href="./css/style.css">
+  <link rel="stylesheet" href="./css/dashboard.css">
+  <link rel="stylesheet" href="./css/history.css">
+</head>
+<body class="dashboard-page">
+
+  <div class="app-loading" id="history-loading">
+    Memeriksa sesi ICM...
+  </div>
+
+  <div id="history-app" class="history-page" hidden>
+    <header class="history-topbar">
+      <a href="./dashboard.html" class="history-brand">
+        <span>✦</span> ICM.
+      </a>
+      <div class="history-topbar-actions">
+        <span id="history-user">ICM Member</span>
+        <a href="./dashboard.html">← Dashboard</a>
+      </div>
+    </header>
+
+    <main class="history-container">
+      <div class="history-heading">
+        <span class="history-eyebrow">YOUR CAREER WORKSPACE</span>
+        <h1>Analysis History</h1>
+        <p>
+          Lihat kembali analisis kecocokan pekerjaan
+          dan rekomendasi karier yang tersimpan di akunmu.
+        </p>
+      </div>
+
+      <div class="history-stats">
+        <article class="history-stat">
+          <span>Job Matching Reports</span>
+          <strong id="match-total">—</strong>
+        </article>
+        <article class="history-stat">
+          <span>Career AI Reports</span>
+          <strong id="career-total">—</strong>
+        </article>
+      </div>
+
+      <div class="history-tabs" role="group"
+           aria-label="Jenis riwayat">
+        <button type="button" id="tab-matches"
+                class="history-tab active"
+                aria-pressed="true">
+          CV & Job Matching
+        </button>
+        <button type="button" id="tab-career"
+                class="history-tab"
+                aria-pressed="false">
+          Career Recommendations
+        </button>
+      </div>
+
+      <section class="history-panel">
+        <div class="history-panel-header">
+          <h2 id="history-section-title">
+            Job Matching History
+          </h2>
+          <button type="button" id="history-refresh">
+            ↻ Refresh
+          </button>
+        </div>
+
+        <div id="history-message"
+             class="history-message"
+             role="status"
+             aria-live="polite"
+             hidden></div>
+
+        <div id="history-list" class="history-list">
+          <p class="history-empty">Memuat riwayat...</p>
+        </div>
+      </section>
+
+      <footer class="history-footer">
+        © 2026 ICM — IT Career CV Analyzer
+        & Recommendation Engine
+      </footer>
+    </main>
+  </div>
+
+  <script src="./js/api.js"></script>
+  <script src="./js/history.js"></script>
+</body>
+</html>

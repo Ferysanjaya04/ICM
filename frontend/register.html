@@ -1,0 +1,161 @@
+
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0">
+
+  <title>Register | ICM Career Intelligence</title>
+  <link rel="stylesheet" href="./css/style.css">
+</head>
+
+<body class="auth-page">
+  <main class="auth-layout">
+
+    <section class="auth-brand">
+      <div class="brand-logo">
+        <span class="brand-symbol">✦</span>
+        <span>ICM<span class="brand-dot">.</span></span>
+      </div>
+
+      <div class="brand-content">
+        <div class="brand-badge">
+          YOUR IT CAREER JOURNEY STARTS HERE
+        </div>
+
+        <h1>
+          Build your
+          <span>future in tech.</span>
+        </h1>
+
+        <p>
+          Buat akun ICM untuk menganalisis CV,
+          menemukan kecocokan pekerjaan, dan
+          mendapatkan rekomendasi karier IT
+          berdasarkan kemampuanmu.
+        </p>
+
+        <div class="brand-features">
+          <div class="brand-feature">
+            <span class="feature-mark">✓</span>
+            CV Analysis with AI
+          </div>
+
+          <div class="brand-feature">
+            <span class="feature-mark">✓</span>
+            Career Recommendation Engine
+          </div>
+
+          <div class="brand-feature">
+            <span class="feature-mark">✓</span>
+            Skill Gap & Learning Path
+          </div>
+        </div>
+      </div>
+
+      <div class="brand-footer">
+        IT Career CV Analyzer & Recommendation Engine
+      </div>
+    </section>
+
+    <section class="auth-form-section">
+      <div class="auth-card">
+
+        <div class="mobile-logo">✦ ICM.</div>
+
+        <div class="auth-heading">
+          <h2>Create account</h2>
+          <p>
+            Daftarkan akunmu untuk mulai menggunakan ICM.
+          </p>
+        </div>
+
+        <form id="register-form">
+
+          <div class="form-group">
+            <label for="username">Username</label>
+            <input
+              type="text"
+              id="username"
+              name="username"
+              placeholder="Buat username"
+              autocomplete="username"
+              required
+            >
+          </div>
+
+          <div class="form-group">
+            <label for="email">Email</label>
+            <input
+              type="email"
+              id="email"
+              name="email"
+              placeholder="nama@email.com"
+              autocomplete="email"
+              required
+            >
+          </div>
+
+          <div class="form-group">
+            <label for="password">Password</label>
+            <input
+              type="password"
+              id="password"
+              name="password"
+              placeholder="Minimal 8 karakter"
+              autocomplete="new-password"
+              minlength="8"
+              required
+            >
+          </div>
+
+          <div class="form-group">
+            <label for="confirm-password">
+              Konfirmasi Password
+            </label>
+            <input
+              type="password"
+              id="confirm-password"
+              name="confirm-password"
+              placeholder="Ulangi password"
+              autocomplete="new-password"
+              required
+            >
+          </div>
+
+          <div
+            id="register-message"
+            class="form-message"
+            role="alert"
+            aria-live="polite"
+            hidden
+          ></div>
+
+          <button
+            type="submit"
+            id="register-button"
+            class="btn-primary"
+          >
+            Create Account
+          </button>
+
+        </form>
+
+        <p class="auth-switch">
+          Sudah punya akun?
+          <a href="./login.html">Sign In</a>
+        </p>
+      </div>
+
+      <p class="auth-copyright">
+        © 2026 ICM Career Intelligence
+      </p>
+    </section>
+
+  </main>
+
+  <script src="./js/api.js"></script>
+  <script src="./js/auth.js"></script>
+</body>
+</html>

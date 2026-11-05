@@ -1,0 +1,396 @@
+
+.career-page[hidden],
+.career-result[hidden],
+.career-message[hidden] {
+  display: none !important;
+}
+
+.career-page {
+  min-height: 100vh;
+  background: #f7f9fd;
+}
+
+.career-topbar {
+  height: 78px;
+  padding: 0 7%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: white;
+  border-bottom: 1px solid #e8edf5;
+  gap: 15px;
+}
+
+.career-logo {
+  font-family: 'Manrope', sans-serif;
+  font-size: 27px;
+  font-weight: 800;
+  color: #172445;
+}
+
+.career-logo span {
+  color: #5266ec;
+}
+
+.career-topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  font-size: 13px;
+  color: #78859a;
+}
+
+.career-topbar-right a,
+.career-upload-link {
+  color: #5266ec;
+  font-weight: 700;
+}
+
+.career-container {
+  max-width: 1200px;
+  margin: auto;
+  padding: 45px 28px;
+}
+
+.career-hero {
+  margin-bottom: 28px;
+}
+
+.career-eyebrow {
+  font-size: 11px;
+  color: #5266ec;
+  font-weight: 800;
+  letter-spacing: 1.4px;
+}
+
+.career-hero h1 {
+  font-family: 'Manrope', sans-serif;
+  font-size: clamp(29px, 4vw, 42px);
+  letter-spacing: -1.4px;
+  margin: 8px 0;
+}
+
+.career-hero p {
+  color: #8290a6;
+  font-size: 14px;
+  line-height: 1.8;
+  max-width: 750px;
+}
+
+.career-form-panel,
+.career-panel,
+.career-role-card {
+  background: white;
+  border: 1px solid #e8edf5;
+  border-radius: 17px;
+  padding: 27px;
+}
+
+.career-form-panel h2,
+.career-panel h3 {
+  font-family: 'Manrope', sans-serif;
+  font-size: 18px;
+  color: #1c2946;
+  margin-bottom: 7px;
+}
+
+.career-form-panel p,
+.career-panel > p {
+  font-size: 12px;
+  color: #8895aa;
+  line-height: 1.8;
+}
+
+.career-form-fields {
+  display: grid;
+  grid-template-columns: 1fr 250px;
+  gap: 16px;
+  align-items: end;
+  margin-top: 24px;
+}
+
+.career-field label {
+  display: block;
+  font-size: 13px;
+  font-weight: 800;
+  margin-bottom: 9px;
+}
+
+.career-field select {
+  width: 100%;
+  padding: 15px;
+  border: 1px solid #dfe5f0;
+  border-radius: 11px;
+  background: white;
+  color: #253250;
+  font-family: inherit;
+  font-size: 13px;
+}
+
+.career-upload-link {
+  display: inline-block;
+  font-size: 12px;
+  margin-top: 16px;
+}
+
+.career-message {
+  margin-top: 18px;
+  padding: 13px 15px;
+  border-radius: 10px;
+  background: #fff0f0;
+  color: #b63838;
+  font-size: 13px;
+}
+
+.career-result {
+  margin-top: 42px;
+}
+
+.career-result-heading {
+  margin-bottom: 22px;
+}
+
+.career-result-heading h2 {
+  font-family: 'Manrope', sans-serif;
+  font-size: 26px;
+  margin: 7px 0;
+}
+
+.career-result-heading p {
+  color: #8290a6;
+  font-size: 13px;
+}
+
+.career-summary {
+  background: linear-gradient(120deg, #1b2a74, #5065d7);
+  color: white;
+  border-radius: 18px;
+  padding: 32px;
+  margin-bottom: 32px;
+}
+
+.career-summary span {
+  font-size: 11px;
+  letter-spacing: 1.2px;
+  font-weight: 800;
+  color: #c5d0ff;
+}
+
+.career-summary h3 {
+  font-family: 'Manrope', sans-serif;
+  font-size: clamp(25px, 4vw, 36px);
+  margin: 10px 0;
+}
+
+.career-summary p {
+  color: #d5defc;
+  font-size: 12px;
+  line-height: 1.8;
+}
+
+.career-section-title {
+  font-family: 'Manrope', sans-serif;
+  font-size: 19px;
+  margin-bottom: 18px;
+}
+
+.career-role-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.career-role-card {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: 16px;
+}
+
+.career-role-rank {
+  display: inline-block;
+  width: fit-content;
+  padding: 7px 11px;
+  border-radius: 20px;
+  background: #edf0ff;
+  color: #5266ec;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.career-role-title {
+  font-size: 18px;
+  color: #1f2d4d;
+  overflow-wrap: anywhere;
+}
+
+.career-role-category,
+.career-role-meta {
+  color: #8b97ab;
+  font-size: 12px;
+}
+
+.career-role-score-label {
+  color: #8c98ab;
+  font-size: 12px;
+}
+
+.career-role-score {
+  font-size: 25px;
+  font-weight: 800;
+  color: #5266ec;
+}
+
+.career-progress {
+  height: 9px;
+  background: #edf0f7;
+  border-radius: 20px;
+  overflow: hidden;
+}
+
+.career-progress-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: #5266ec;
+}
+
+.career-role-note {
+  font-size: 11px;
+  line-height: 1.7;
+  color: #8b97ab;
+}
+
+.career-extra-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+  margin-top: 22px;
+}
+
+.career-chip-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 18px;
+}
+
+.career-chip {
+  display: inline-flex;
+  padding: 7px 11px;
+  border-radius: 18px;
+  background: #e8f7ef;
+  color: #167a53;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.career-empty {
+  color: #929eb1;
+  font-size: 12px;
+  line-height: 1.8;
+  margin-top: 15px;
+}
+
+.career-probability-item {
+  margin-top: 17px;
+}
+
+.career-probability-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 9px;
+  font-size: 12px;
+}
+
+.career-probability-header span {
+  overflow-wrap: anywhere;
+}
+
+.career-probability-header strong {
+  color: #5266ec;
+  white-space: nowrap;
+}
+
+.career-learning {
+  margin-top: 22px;
+}
+
+.career-learning-item {
+  padding: 18px 0;
+  border-bottom: 1px solid #edf0f5;
+}
+
+.career-learning-item:last-child {
+  border-bottom: none;
+}
+
+.career-learning-item strong {
+  display: block;
+  font-size: 14px;
+  color: #263452;
+  margin-bottom: 8px;
+}
+
+.career-learning-item p,
+.career-learning-item li {
+  font-size: 12px;
+  color: #78859d;
+  line-height: 1.8;
+}
+
+.career-learning-item ul {
+  padding-left: 19px;
+  margin-top: 8px;
+}
+
+.career-disclaimer {
+  margin-top: 25px;
+  padding: 16px 18px;
+  background: #edf0ff;
+  border-radius: 12px;
+  color: #5968a9;
+  font-size: 12px;
+  line-height: 1.8;
+}
+
+.career-footer {
+  text-align: center;
+  color: #a2aec0;
+  font-size: 11px;
+  margin-top: 42px;
+}
+
+@media (max-width: 950px) {
+  .career-role-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 750px) {
+  .career-form-fields,
+  .career-extra-grid,
+  .career-role-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .career-topbar {
+    padding: 0 22px;
+  }
+
+  .career-container {
+    padding: 32px 20px;
+  }
+
+  .career-form-panel,
+  .career-panel,
+  .career-role-card {
+    padding: 22px;
+  }
+}
+
+@media (max-width: 480px) {
+  .career-topbar-right > span {
+    display: none;
+  }
+}

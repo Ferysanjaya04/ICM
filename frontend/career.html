@@ -1,0 +1,168 @@
+
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0">
+
+  <title>Career AI | ICM Career Intelligence</title>
+
+  <link rel="stylesheet" href="./css/style.css">
+  <link rel="stylesheet" href="./css/dashboard.css">
+  <link rel="stylesheet" href="./css/career.css">
+</head>
+
+<body class="dashboard-page">
+
+  <div id="career-loading" class="app-loading">
+    Memeriksa sesi ICM...
+  </div>
+
+  <div id="career-app" class="career-page" hidden>
+
+    <header class="career-topbar">
+      <a href="./dashboard.html" class="career-logo">
+        <span>✦</span> ICM.
+      </a>
+
+      <div class="career-topbar-right">
+        <span id="career-user">ICM Member</span>
+        <a href="./dashboard.html">← Dashboard</a>
+      </div>
+    </header>
+
+    <main class="career-container">
+
+      <section class="career-hero">
+        <span class="career-eyebrow">AI FEATURE 02</span>
+
+        <h1>Discover Your Career Path</h1>
+
+        <p>
+          Temukan tiga rekomendasi karier IT berdasarkan
+          profil dan keterampilan dalam CV melalui
+          TF-IDF dan Logistic Regression.
+        </p>
+      </section>
+
+      <section class="career-form-panel">
+
+        <div>
+          <h2>Generate Career Recommendations</h2>
+          <p>
+            Pilih CV yang ingin dianalisis oleh Career AI.
+          </p>
+        </div>
+
+        <form id="career-form">
+          <div class="career-form-fields">
+
+            <div class="career-field">
+              <label for="career-resume-select">
+                Select Your CV
+              </label>
+
+              <select id="career-resume-select" required>
+                <option value="">Memuat CV...</option>
+              </select>
+            </div>
+
+            <button
+              type="submit"
+              id="career-generate-button"
+              class="btn-primary">
+              Generate Career AI
+            </button>
+
+          </div>
+        </form>
+
+        <a href="./resumes.html" class="career-upload-link">
+          + Upload CV baru
+        </a>
+
+        <div id="career-message"
+             class="career-message"
+             role="alert"
+             aria-live="polite"
+             hidden></div>
+
+      </section>
+
+      <section id="career-result" class="career-result" hidden>
+
+        <div class="career-result-heading">
+          <span class="career-eyebrow">YOUR AI CAREER REPORT</span>
+          <h2>Career Recommendations</h2>
+          <p id="career-result-subtitle">
+            Rekomendasi berdasarkan CV terpilih.
+          </p>
+        </div>
+
+        <div class="career-summary">
+          <span>DOMINANT CAREER CATEGORY</span>
+          <h3 id="dominant-category">—</h3>
+          <p>
+            Kategori utama yang diprediksi oleh model.
+            Ini bukan jaminan kesesuaian pekerjaan.
+          </p>
+        </div>
+
+        <h3 class="career-section-title">
+          Top 3 Recommended Careers
+        </h3>
+
+        <div id="career-role-grid" class="career-role-grid"></div>
+
+        <section class="career-extra-grid">
+
+          <article class="career-panel">
+            <h3>Detected Skills</h3>
+            <p>
+              Keterampilan yang terdeteksi dalam profil CV.
+            </p>
+            <div id="career-skills" class="career-chip-list"></div>
+          </article>
+
+          <article class="career-panel">
+            <h3>Classifier Probabilities</h3>
+            <p>
+              Probabilitas kategori model, berbeda
+              dari persentase kecocokan skill.
+            </p>
+            <div id="career-probabilities"></div>
+          </article>
+
+        </section>
+
+        <article class="career-panel career-learning">
+          <h3>Personalized Learning Path</h3>
+          <p>
+            Saran pengembangan keterampilan
+            berdasarkan hasil rekomendasi AI.
+          </p>
+          <div id="career-learning-path"></div>
+        </article>
+
+        <div class="career-disclaimer">
+          Hasil rekomendasi adalah alat bantu eksplorasi
+          karier. Probabilitas model dan skill matching
+          memiliki interpretasi yang berbeda.
+        </div>
+
+      </section>
+
+      <footer class="career-footer">
+        © 2026 ICM — IT Career CV Analyzer
+        & Recommendation Engine
+      </footer>
+
+    </main>
+  </div>
+
+  <script src="./js/api.js"></script>
+  <script src="./js/career.js"></script>
+
+</body>
+</html>

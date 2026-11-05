@@ -1,573 +1,653 @@
-"""
-Feature 2: Career Recommendation Engine
-Modul AI untuk merekomendasikan jalur karier berdasarkan CV.
 
-Pipeline:
-1. Load pre-trained TF-IDF + Logistic Regression model
-2. Load job roles reference data
-3. Extract & normalize CV text
-4. Predict top-3 career categories
-5. Match skills dengan job requirements
-6. Generate recommendations dengan explanations
+"""
+Feature 2: IT Career Recommendation Engine.
+
+Metode utama:
+- TF-IDF + Logistic Regression (model pretrained)
+- Top-3 kategori karier berdasarkan probabilitas classifier
+- Referensi pekerjaan dari job_roles.csv
+- Skill matching, skill gap, dan learning path sederhana
+
+Probabilitas classifier dan persentase skill matching
+merupakan dua ukuran yang berbeda.
 """
 
-import os
 import json
 import logging
-from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Any
 import re
 import unicodedata
+from difflib import SequenceMatcher
+from pathlib import Path
+from typing import Any, Dict, List, Tuple
 
 import joblib
-import pandas as pd
 import numpy as np
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.linear_model import LogisticRegression
+import pandas as pd
 
 logger = logging.getLogger(__name__)
 
-# ============================================================
-# CONSTANTS & PATHS
-# ============================================================
-
 BASE_DIR = Path(__file__).resolve().parent
-# Data files are in VitLog/data/, not backend/data/
-# Go up two levels: lib/ -> backend/ -> VitLog/
 VITLOG_ROOT = BASE_DIR.parent.parent
-MODEL_PATH = VITLOG_ROOT / "data" / "processed" / "job_role_classifier.joblib"
-JOB_ROLES_PATH = VITLOG_ROOT / "data" / "raw" / "job_roles.csv"
-SKILLS_DB_PATH = BASE_DIR / "skills_database.json"
 
-# ============================================================
-# GLOBAL STATE (Lazy loading)
-# ============================================================
+MODEL_PATH = (
+    VITLOG_ROOT / "data" / "processed" /
+    "job_role_classifier.joblib"
+)
+JOB_ROLES_PATH = (
+    VITLOG_ROOT / "data" / "raw" / "job_roles.csv"
+)
+SKILLS_DB_PATH = BASE_DIR / "skills_database.json"
 
 _classifier = None
 _vectorizer = None
 _job_roles_df = None
 _skills_database = None
 
+GENERIC_ROLE_WORDS = {
+    "developer", "engineer", "specialist", "analyst",
+    "administrator", "consultant", "software",
+    "senior", "junior", "lead", "it"
+}
+
+ROLE_ALIASES = {
+    "back end": "backend",
+    "front end": "frontend",
+    "full stack": "fullstack",
+    "full-stack": "fullstack",
+    "dot net": "dotnet",
+    ".net": "dotnet",
+    "ui ux": "uiux",
+    "ui/ux": "uiux",
+    "user experience": "uiux",
+    "user interface": "uiux",
+    "dev ops": "devops",
+    "data scientist": "datascience",
+    "data science": "datascience",
+    "machine learning": "machinelearning",
+    "quality assurance": "qa",
+    "site reliability": "sre",
+    "cyber security": "cybersecurity",
+}
+
+
+def normalize_text(text: str) -> str:
+    if text is None:
+        return ""
+
+    text = unicodedata.normalize("NFKC", str(text))
+    text = text.lower()
+    return re.sub(r"\s+", " ", text).strip()
+
+
+def normalize_role_title(title: str) -> str:
+    text = normalize_text(title)
+
+    for original, replacement in sorted(
+        ROLE_ALIASES.items(),
+        key=lambda item: len(item[0]),
+        reverse=True
+    ):
+        text = text.replace(original, replacement)
+
+    text = re.sub(r"[^a-z0-9+#]+", " ", text)
+    return re.sub(r"\s+", " ", text).strip()
+
 
 def _load_model():
-    """Load pre-trained model dan vectorizer dari joblib."""
     global _classifier, _vectorizer
 
     if _classifier is not None and _vectorizer is not None:
         return _classifier, _vectorizer
 
-    if not MODEL_PATH.exists():
-        raise FileNotFoundError(f"Model tidak ditemukan: {MODEL_PATH}")
+    if not MODEL_PATH.is_file():
+        raise FileNotFoundError(
+            f"Model Feature 2 tidak ditemukan: {MODEL_PATH}"
+        )
 
-    try:
-        model_package = joblib.load(str(MODEL_PATH))
+    # Hanya muat joblib yang berasal dari proyek/sumber tepercaya.
+    package = joblib.load(MODEL_PATH)
 
-        # Expected format: dict with 'pipeline' key
-        if isinstance(model_package, dict) and 'pipeline' in model_package:
-            pipeline = model_package['pipeline']
+    if isinstance(package, dict):
+        pipeline = package.get("pipeline")
 
-            # Extract tfidf and classifier from pipeline steps
-            if hasattr(pipeline, 'named_steps'):
-                _vectorizer = pipeline.named_steps.get('tfidf')
-                _classifier = pipeline.named_steps.get('classifier')
-            else:
-                # Fallback: assume pipeline is (tfidf, classifier)
-                if isinstance(pipeline, tuple) and len(pipeline) == 2:
-                    _vectorizer, _classifier = pipeline
-        elif isinstance(model_package, dict):
-            # Legacy: separate classifier dan vectorizer
-            _classifier = model_package.get('classifier')
-            _vectorizer = model_package.get('vectorizer')
+        if pipeline is None:
+            classifier = package.get("classifier")
+            vectorizer = package.get("vectorizer")
         else:
-            # Assume it's a pipeline directly
-            if hasattr(model_package, 'named_steps'):
-                _vectorizer = model_package.named_steps.get('tfidf')
-                _classifier = model_package.named_steps.get('classifier')
-            else:
-                _classifier = model_package
+            if not hasattr(pipeline, "named_steps"):
+                raise ValueError(
+                    "Format pipeline pada model tidak didukung."
+                )
+            classifier = pipeline.named_steps.get("classifier")
+            vectorizer = pipeline.named_steps.get("tfidf")
+    elif hasattr(package, "named_steps"):
+        classifier = package.named_steps.get("classifier")
+        vectorizer = package.named_steps.get("tfidf")
+    else:
+        raise ValueError("Format model Feature 2 tidak dikenali.")
 
-        if _classifier is None:
-            raise ValueError("Classifier tidak ditemukan dalam model package")
-        if _vectorizer is None:
-            raise ValueError("Vectorizer tidak ditemukan dalam model package")
+    if classifier is None or vectorizer is None:
+        raise ValueError(
+            "Classifier atau TF-IDF vectorizer tidak ditemukan."
+        )
 
-        logger.info("Model berhasil dimuat")
-        return _classifier, _vectorizer
+    if not hasattr(classifier, "predict_proba"):
+        raise ValueError(
+            "Classifier tidak menyediakan predict_proba()."
+        )
 
-    except Exception as e:
-        logger.error(f"Gagal memuat model: {e}")
-        raise
+    _classifier = classifier
+    _vectorizer = vectorizer
+
+    logger.info("Model Feature 2 berhasil dimuat.")
+    return _classifier, _vectorizer
 
 
 def _load_job_roles():
-    """Load job roles reference dari CSV."""
     global _job_roles_df
 
     if _job_roles_df is not None:
         return _job_roles_df
 
-    if not JOB_ROLES_PATH.exists():
-        raise FileNotFoundError(f"Job roles CSV tidak ditemukan: {JOB_ROLES_PATH}")
+    if not JOB_ROLES_PATH.is_file():
+        raise FileNotFoundError(
+            f"Data pekerjaan tidak ditemukan: {JOB_ROLES_PATH}"
+        )
 
-    try:
-        _job_roles_df = pd.read_csv(str(JOB_ROLES_PATH))
+    df = pd.read_csv(JOB_ROLES_PATH)
+    df.columns = [
+        str(column).strip().lower()
+        for column in df.columns
+    ]
 
-        # Normalize column names
-        _job_roles_df.columns = [col.lower().strip() for col in _job_roles_df.columns]
+    required_columns = {"job title", "required skills"}
+    missing_columns = required_columns - set(df.columns)
 
-        logger.info(f"Job roles dimuat: {len(_job_roles_df)} entries")
-        return _job_roles_df
+    if missing_columns:
+        raise ValueError(
+            "Kolom CSV tidak lengkap: " +
+            ", ".join(sorted(missing_columns))
+        )
 
-    except Exception as e:
-        logger.error(f"Gagal memuat job roles: {e}")
-        raise
+    df = df.fillna("")
+    _job_roles_df = df
+
+    logger.info(
+        "Data referensi pekerjaan dimuat: %s baris.",
+        len(df)
+    )
+
+    return _job_roles_df
 
 
 def _load_skills_database():
-    """Load skills database dari JSON."""
     global _skills_database
 
     if _skills_database is not None:
         return _skills_database
 
-    if not SKILLS_DB_PATH.exists():
-        logger.warning(f"Skills database tidak ditemukan: {SKILLS_DB_PATH}, menggunakan fallback")
-        _skills_database = {"default": []}
-        return _skills_database
+    if not SKILLS_DB_PATH.is_file():
+        raise FileNotFoundError(
+            f"Database skill tidak ditemukan: {SKILLS_DB_PATH}"
+        )
 
-    try:
-        with open(str(SKILLS_DB_PATH)) as f:
-            _skills_database = json.load(f)
+    with open(SKILLS_DB_PATH, "r", encoding="utf-8") as file:
+        data = json.load(file)
 
-        logger.info(f"Skills database dimuat: {len(_skills_database)} categories")
-        return _skills_database
+    if not isinstance(data, dict):
+        raise ValueError("Database skill harus berupa objek JSON.")
 
-    except Exception as e:
-        logger.error(f"Gagal memuat skills database: {e}")
-        _skills_database = {"default": []}
-        return _skills_database
+    _skills_database = data
+    return _skills_database
 
 
-# ============================================================
-# TEXT PROCESSING FUNCTIONS
-# ============================================================
-
-def normalize_text(text: str) -> str:
-    """Normalize text: unicode, lowercase, whitespace."""
-    if not text:
-        return ""
-
-    # Unicode normalization
-    text = unicodedata.normalize("NFKC", str(text))
-
-    # Lowercase
-    text = text.lower()
-
-    # Remove extra whitespace
-    text = re.sub(r"\s+", " ", text).strip()
-
-    return text
-
-
-def extract_skills_from_text(text: str, skills_db: Dict) -> List[str]:
-    """Extract skills dari teks CV berdasarkan skills database."""
+def extract_skills_from_text(
+    text: str,
+    skills_db: Dict
+) -> List[str]:
     normalized_text = normalize_text(text)
-    found_skills = set()
+    found = set()
 
-    # Flatten all skills dari semua categories
-    all_skills = []
-    for category, skills in skills_db.items():
-        if isinstance(skills, list):
-            all_skills.extend(skills)
-        elif isinstance(skills, dict):
-            # Handle nested structure
-            for subcategory, subskills in skills.items():
-                if isinstance(subskills, list):
-                    all_skills.extend(subskills)
+    for skills in skills_db.values():
+        if not isinstance(skills, list):
+            continue
 
-    # Match skills dalam teks
-    for skill in all_skills:
-        skill_normalized = normalize_text(skill)
-        # Simple word boundary matching
-        if re.search(rf"\b{re.escape(skill_normalized)}\b", normalized_text):
-            found_skills.add(skill_normalized)
+        for skill in skills:
+            normalized_skill = normalize_text(skill)
 
-    return sorted(list(found_skills))
+            if not normalized_skill:
+                continue
+
+            pattern = (
+                r"(?<!\w)" +
+                re.escape(normalized_skill) +
+                r"(?!\w)"
+            )
+
+            if re.search(pattern, normalized_text):
+                found.add(normalized_skill)
+
+    return sorted(found)
 
 
-# ============================================================
-# MAIN PREDICTION FUNCTION
-# ============================================================
+def parse_required_skills(value: Any) -> List[str]:
+    """Mendukung format CSV dipisah |, list, atau JSON list."""
+    if value is None:
+        return []
 
-def predict_career_categories(cv_text: str, top_k: int = 3) -> Dict[str, Any]:
+    if isinstance(value, list):
+        raw_skills = value
+
+    elif isinstance(value, str):
+        value = value.strip()
+
+        if not value:
+            return []
+
+        if value.startswith("["):
+            try:
+                parsed = json.loads(value)
+                raw_skills = (
+                    parsed if isinstance(parsed, list) else []
+                )
+            except json.JSONDecodeError:
+                return []
+        else:
+            raw_skills = value.split("|")
+
+    else:
+        return []
+
+    result = []
+    seen = set()
+
+    for skill in raw_skills:
+        normalized = normalize_text(skill)
+
+        if normalized and normalized not in seen:
+            result.append(normalized)
+            seen.add(normalized)
+
+    return result
+
+
+def calculate_skill_match_percentage(
+    cv_skills: List[str],
+    required_skills: List[str]
+) -> float:
     """
-    Predict top-k career categories dari CV text.
-
-    Args:
-        cv_text: Teks CV yang sudah diekstrak
-        top_k: Jumlah kategori top yang dikembalikan
-
-    Returns:
-        Dict dengan predictions, probabilities, dan metadata
+    Skor 0 merupakan fallback numerik saat requirements kosong.
+    Periksa skill_match_available sebelum menafsirkan skor.
     """
-    if not cv_text or not cv_text.strip():
-        raise ValueError("CV text tidak boleh kosong")
+    required = set(parse_required_skills(required_skills))
+
+    if not required:
+        return 0.0
+
+    available = set(parse_required_skills(cv_skills))
+    matched = len(available & required)
+
+    return round(100.0 * matched / len(required), 2)
+
+
+def get_skill_gap(
+    cv_skills: List[str],
+    required_skills: List[str]
+) -> List[str]:
+    available = set(parse_required_skills(cv_skills))
+    required = set(parse_required_skills(required_skills))
+
+    return sorted(required - available)
+
+
+def predict_career_categories(
+    cv_text: str,
+    top_k: int = 3
+) -> Dict[str, Any]:
+    if not isinstance(cv_text, str) or not cv_text.strip():
+        return {
+            "status": "error",
+            "error": "CV text tidak boleh kosong.",
+            "predicted_categories": [],
+            "predictions": [],
+            "probabilities": {}
+        }
 
     try:
         classifier, vectorizer = _load_model()
-    except Exception as e:
-        return {
-            "status": "error",
-            "error": str(e),
-            "predictions": [],
-            "probabilities": {}
-        }
 
-    try:
-        # Normalize CV text
-        cv_normalized = normalize_text(cv_text)
+        features = vectorizer.transform(
+            [normalize_text(cv_text)]
+        )
 
-        # Vectorize
-        cv_features = vectorizer.transform([cv_normalized])
-
-        # Predict probabilities
-        probabilities = classifier.predict_proba(cv_features)[0]
+        probabilities = classifier.predict_proba(features)[0]
         classes = classifier.classes_
 
-        # Get top-k
-        top_indices = np.argsort(probabilities)[-top_k:][::-1]
+        top_k = max(1, min(int(top_k), len(classes)))
 
-        predictions = []
-        prob_dict = {}
+        indices = np.argsort(probabilities)[::-1][:top_k]
 
-        for idx in top_indices:
-            category = classes[idx]
-            prob = float(probabilities[idx])
-            predictions.append(category)
-            prob_dict[category] = prob
+        categories = [
+            str(classes[index])
+            for index in indices
+        ]
+
+        probability_map = {
+            str(classes[index]): float(probabilities[index])
+            for index in indices
+        }
 
         return {
             "status": "success",
-            "predicted_categories": predictions,
-            "probabilities": prob_dict,
-            "top_category": predictions[0] if predictions else None
+            "predicted_categories": categories,
+            "predictions": categories,
+            "probabilities": probability_map,
+            "top_category": categories[0]
         }
 
-    except Exception as e:
-        logger.error(f"Prediction error: {e}")
+    except Exception:
+        logger.exception(
+            "Gagal memprediksi kategori karier Feature 2."
+        )
+
         return {
             "status": "error",
-            "error": str(e),
+            "error": "Prediksi kategori karier gagal.",
+            "predicted_categories": [],
             "predictions": [],
             "probabilities": {}
         }
 
 
-# ============================================================
-# JOB MATCHING & SKILL GAP FUNCTIONS
-# ============================================================
+def _role_similarity(
+    predicted_title: str,
+    csv_title: str
+) -> float:
+    predicted = normalize_role_title(predicted_title)
+    candidate = normalize_role_title(csv_title)
 
-def find_matching_roles(predicted_category: str, top_n: int = 3) -> List[Dict[str, Any]]:
-    """
-    Find matching job roles untuk predicted category.
+    if not predicted or not candidate:
+        return 0.0
 
-    Strategy:
-    1. Try exact match on job_title (case-insensitive)
-    2. If no exact match, try keyword matching
-    3. If still no match, search in category column
-    """
-    try:
-        job_roles = _load_job_roles()
-    except Exception as e:
-        logger.error(f"Gagal load job roles: {e}")
-        return []
+    if predicted == candidate:
+        return 1.0
 
-    roles = []
+    predicted_tokens = set(predicted.split())
+    candidate_tokens = set(candidate.split())
 
-    # Strategy 1: Exact match on job_title (primary method)
-    matching_roles = job_roles[
-        job_roles['job title'].str.contains(predicted_category, case=False, na=False)
-    ].head(top_n)
+    predicted_specific = (
+        predicted_tokens - GENERIC_ROLE_WORDS
+    )
+    candidate_specific = (
+        candidate_tokens - GENERIC_ROLE_WORDS
+    )
 
-    if len(matching_roles) > 0:
-        logger.info(f"Found {len(matching_roles)} roles by exact title match for '{predicted_category}'")
-        for _, row in matching_roles.iterrows():
-            role_dict = row.to_dict()
-            if isinstance(role_dict.get('required_skills'), str):
-                try:
-                    role_dict['required_skills'] = json.loads(role_dict['required_skills'])
-                except:
-                    role_dict['required_skills'] = []
-            roles.append(role_dict)
-        return roles
+    shared_specific = predicted_specific & candidate_specific
 
-    # Strategy 2: Keyword matching for fuzzy cases
-    # Extract keywords from predicted_category
-    keywords = predicted_category.split()
-    for keyword in keywords:
-        if len(keyword) > 2:  # Skip very short words
-            matching_roles = job_roles[
-                job_roles['job title'].str.contains(keyword, case=False, na=False)
-            ].head(top_n)
+    # Hindari mencocokkan Backend dan Frontend hanya
+    # karena keduanya sama-sama memiliki kata Developer.
+    if (
+        predicted_specific and candidate_specific
+        and not shared_specific
+    ):
+        return 0.0
 
-            if len(matching_roles) > 0:
-                logger.info(f"Found {len(matching_roles)} roles by keyword '{keyword}' for '{predicted_category}'")
-                for _, row in matching_roles.iterrows():
-                    role_dict = row.to_dict()
-                    if isinstance(role_dict.get('required_skills'), str):
-                        try:
-                            role_dict['required_skills'] = json.loads(role_dict['required_skills'])
-                        except:
-                            role_dict['required_skills'] = []
-                    roles.append(role_dict)
-                return roles[:top_n]  # Limit to top_n
+    if shared_specific:
+        coverage = (
+            len(shared_specific) /
+            max(len(predicted_specific), 1)
+        )
+        string_similarity = SequenceMatcher(
+            None, predicted, candidate
+        ).ratio()
 
-    # Strategy 3: Fallback to category column (for very different input)
-    if predicted_category.lower() not in [cat.lower() for cat in job_roles['category'].unique()]:
-        logger.warning(f"Category '{predicted_category}' not found in job titles or categories")
-        return []
+        return 0.75 * coverage + 0.25 * string_similarity
 
-    matching_roles = job_roles[
-        job_roles['category'].str.lower() == predicted_category.lower()
-    ].head(top_n)
-
-    for _, row in matching_roles.iterrows():
-        role_dict = row.to_dict()
-        if isinstance(role_dict.get('required_skills'), str):
-            try:
-                role_dict['required_skills'] = json.loads(role_dict['required_skills'])
-            except:
-                role_dict['required_skills'] = []
-        roles.append(role_dict)
-
-    return roles
+    # Fallback untuk judul yang hanya berisi kata umum.
+    return 0.4 * SequenceMatcher(
+        None, predicted, candidate
+    ).ratio()
 
 
-def calculate_skill_match_percentage(cv_skills: List[str], required_skills: List[str]) -> float:
-    """Calculate match percentage antara CV skills dan required skills."""
-    if not required_skills:
-        return 100.0
+def find_matching_roles(
+    predicted_category: str,
+    top_n: int = 3
+) -> List[Dict[str, Any]]:
+    """Cari judul pekerjaan yang relevan dengan label model."""
+    roles_df = _load_job_roles()
 
-    cv_skills_set = set(s.lower() for s in cv_skills)
-    required_set = set(s.lower() for s in required_skills)
+    candidates = []
 
-    matched = len(cv_skills_set & required_set)
-    total = len(required_set)
+    for _, row in roles_df.iterrows():
+        title = str(row.get("job title", "")).strip()
 
-    return round((matched / total) * 100, 2) if total > 0 else 0.0
+        if not title:
+            continue
+
+        similarity = _role_similarity(
+            predicted_category, title
+        )
+
+        if similarity < 0.55:
+            continue
+
+        role = {
+            "job title": title,
+            "category": str(row.get("category", "")),
+            "required_skills": parse_required_skills(
+                row.get("required skills", "")
+            ),
+            "salary range": str(
+                row.get("salary range", "")
+            ),
+            "education requirement": str(
+                row.get("education requirement", "")
+            ),
+            "experience years": row.get(
+                "experience years", ""
+            ),
+            "_title_similarity": similarity
+        }
+
+        candidates.append(role)
+
+    candidates.sort(
+        key=lambda item: item["_title_similarity"],
+        reverse=True
+    )
+
+    return candidates[:max(0, int(top_n))]
 
 
-def get_skill_gap(cv_skills: List[str], required_skills: List[str]) -> List[str]:
-    """Get missing skills (skill gap)."""
-    cv_skills_set = set(s.lower() for s in cv_skills)
-    required_set = set(s.lower() for s in required_skills)
+def _build_learning_path(
+    recommendations: List[Dict[str, Any]]
+) -> List[Dict[str, Any]]:
+    learning_path = []
 
-    gap = required_set - cv_skills_set
-    return sorted(list(gap))
+    for recommendation in recommendations:
+        missing = recommendation["missing_skills"]
 
-
-# ============================================================
-# MAIN ENTRY POINT
-# ============================================================
-
-def recommend_career(cv_text: str) -> Dict[str, Any]:
-    """
-    Main function untuk generate career recommendations dari CV.
-
-    Args:
-        cv_text: Teks CV yang sudah diekstrak dari file
-
-    Returns:
-        Dict dengan struktur recommendation yang siap disimpan ke database
-        {
-            "status": "success" | "error",
-            "error": str (jika status error),
-            "predicted_category": str,
-            "top_recommendations": [
+        learning_path.append({
+            "rank": recommendation["rank"],
+            "role_title": recommendation["role_title"],
+            "suggested_skills": missing,
+            "steps": [
                 {
-                    "rank": int,
-                    "role_title": str,
-                    "category": str,
-                    "match_percentage": float,
-                    "required_skills": list,
-                    "salary_range": str
-                },
-                ...
-            ],
-            "detected_skills": list,
-            "skill_gaps": dict (role -> gap list),
-            "profile_summary": dict
-        }
-    """
-    if not cv_text or not cv_text.strip():
-        return {
-            "status": "error",
-            "error": "CV text tidak boleh kosong"
-        }
-
-    # Step 1: Load skills database
-    try:
-        skills_db = _load_skills_database()
-    except Exception as e:
-        return {
-            "status": "error",
-            "error": f"Gagal load skills database: {e}"
-        }
-
-    # Step 2: Extract skills dari CV
-    detected_skills = extract_skills_from_text(cv_text, skills_db)
-
-    # Step 3: Predict career categories
-    prediction_result = predict_career_categories(cv_text, top_k=3)
-
-    if prediction_result["status"] != "success":
-        return {
-            "status": "error",
-            "error": prediction_result.get("error", "Prediction failed")
-        }
-
-    predicted_categories = prediction_result["predicted_categories"]
-    predicted_category = predicted_categories[0] if predicted_categories else None
-
-    if not predicted_category:
-        return {
-            "status": "error",
-            "error": "Tidak dapat memprediksi kategori karier dari CV"
-        }
-
-    # Step 4: Find matching roles for ALL top-3 predicted categories
-    all_matching_roles = []
-    seen_titles = set()
-
-    for cat_idx, cat in enumerate(predicted_categories):
-        cat_prob = prediction_result["probabilities"].get(cat, 0.0)
-        matching_roles = find_matching_roles(cat, top_n=3)
-
-        for role in matching_roles:
-            job_title = role.get('job title', role.get('role_title', 'Unknown'))
-            # Deduplicate by job title
-            if job_title not in seen_titles:
-                # Add category probability as a weight for sorting
-                role['_source_category'] = cat
-                role['_source_category_prob'] = cat_prob
-                role['_category_rank'] = cat_idx
-                all_matching_roles.append(role)
-                seen_titles.add(job_title)
-
-    if not all_matching_roles:
-        return {
-            "status": "warning",
-            "message": f"Tidak ada job roles ditemukan untuk kategori top-3: {predicted_categories}",
-            "predicted_category": predicted_category,
-            "all_predicted_categories": predicted_categories,
-            "detected_skills": detected_skills,
-            "top_recommendations": [],
-            "profile_summary": {}
-        }
-
-    # Sort by: category rank (top predicted category first), then by match percentage
-    all_matching_roles.sort(key=lambda r: (r.get('_category_rank', 99), -calculate_skill_match_percentage(detected_skills, r.get('required_skills', []))))
-
-    # Take top 3 overall
-    top_matching_roles = all_matching_roles[:3]
-
-    # Step 5: Calculate match percentages dan skill gaps
-    top_recommendations = []
-    skill_gaps = {}
-
-    for rank, role in enumerate(top_matching_roles, 1):
-        required_skills = role.get('required_skills', [])
-        # Handle both 'required_skills' (underscore) dan 'required skills' (space)
-        if not required_skills:
-            required_skills = role.get('required skills', [])
-
-        if isinstance(required_skills, str):
-            # Parse pipe-separated skills dari CSV
-            if '|' in required_skills:
-                required_skills = [s.strip() for s in required_skills.split('|')]
-            else:
-                try:
-                    required_skills = json.loads(required_skills)
-                except:
-                    required_skills = []
-
-        match_pct = calculate_skill_match_percentage(detected_skills, required_skills)
-        gap = get_skill_gap(detected_skills, required_skills)
-
-        # Get job_title (CSV uses 'job title' with space after normalization)
-        job_title = role.get('job title', role.get('role_title', 'Unknown'))
-
-        # Get salary_range (CSV uses 'salary range' with space after normalization)
-        salary_range = role.get('salary range', role.get('salary_range', ''))
-
-        # Get category from CSV (more accurate than predicted)
-        category = role.get('category', role.get('_source_category', predicted_category))
-
-        # Get description (fallback if available)
-        description = role.get('description', '')
-
-        top_recommendations.append({
-            "rank": rank,
-            "role_title": job_title,
-            "category": category,
-            "match_percentage": match_pct,
-            "required_skills": required_skills,
-            "salary_range": salary_range,
-            "description": description
+                    "step": index,
+                    "skill": skill,
+                    "activity": (
+                        f"Pelajari dasar {skill}, "
+                        "lalu buat latihan atau proyek kecil."
+                    )
+                }
+                for index, skill in enumerate(missing, 1)
+            ]
         })
 
-        skill_gaps[job_title] = gap
-
-    # Step 6: Create profile summary
-    profile_summary = {
-        "cv_length": len(cv_text),
-        "detected_skills_count": len(detected_skills),
-        "top_category": predicted_category,
-        "all_predicted_categories": predicted_categories,
-        "category_probabilities": prediction_result.get("probabilities", {})
-    }
-
-    return {
-        "status": "success",
-        "predicted_category": predicted_category,
-        "top_recommendations": top_recommendations,
-        "detected_skills": detected_skills,
-        "skill_gaps": skill_gaps,
-        "profile_summary": profile_summary
-    }
+    return learning_path
 
 
-# ============================================================
-# UTILITY FUNCTIONS
-# ============================================================
+def recommend_career(cv_text: str) -> Dict[str, Any]:
+    valid, message = validate_cv_text(cv_text)
 
-def validate_cv_text(cv_text: str, min_length: int = 50) -> Tuple[bool, str]:
-    """Validate CV text untuk processing."""
-    if not cv_text:
-        return False, "CV text tidak boleh kosong"
+    if not valid:
+        return {
+            "status": "error",
+            "error": message
+        }
+
+    try:
+        skills_db = _load_skills_database()
+
+        detected_skills = extract_skills_from_text(
+            cv_text, skills_db
+        )
+
+        prediction = predict_career_categories(
+            cv_text, top_k=3
+        )
+
+        if prediction["status"] != "success":
+            return prediction
+
+        categories = prediction["predicted_categories"]
+        probabilities = prediction["probabilities"]
+
+        recommendations = []
+        skill_gaps = {}
+        used_job_titles = set()
+
+        # Satu rekomendasi untuk setiap kategori Top-3 model.
+        for rank, predicted_category in enumerate(
+            categories, start=1
+        ):
+            matched_roles = find_matching_roles(
+                predicted_category, top_n=20
+            )
+
+            selected_role = None
+
+            for candidate in matched_roles:
+                key = normalize_role_title(
+                    candidate["job title"]
+                )
+
+                if key not in used_job_titles:
+                    selected_role = candidate
+                    used_job_titles.add(key)
+                    break
+
+            if selected_role:
+                role_title = selected_role["job title"]
+                category = selected_role["category"]
+                required_skills = selected_role[
+                    "required_skills"
+                ]
+                salary_range = selected_role[
+                    "salary range"
+                ]
+                source = "job_roles_csv"
+            else:
+                # Tetap tampilkan label yang benar-benar
+                # diprediksi model, tanpa menciptakan
+                # persyaratan pekerjaan yang tidak diketahui.
+                role_title = predicted_category
+                category = predicted_category
+                required_skills = []
+                salary_range = ""
+                source = "classifier_label"
+
+            skill_match_available = bool(required_skills)
+
+            match_percentage = (
+                calculate_skill_match_percentage(
+                    detected_skills, required_skills
+                )
+            )
+
+            missing_skills = get_skill_gap(
+                detected_skills, required_skills
+            )
+
+            recommendations.append({
+                "rank": rank,
+                "role_title": role_title,
+                "category": category,
+                "predicted_category": predicted_category,
+                "category_probability": probabilities.get(
+                    predicted_category, 0.0
+                ),
+                "match_percentage": match_percentage,
+                "skill_match_available": skill_match_available,
+                "required_skills": required_skills,
+                "missing_skills": missing_skills,
+                "salary_range": salary_range,
+                "source": source
+            })
+
+            skill_gaps[role_title] = missing_skills
+
+        profile_summary = {
+            "cv_length": len(cv_text),
+            "detected_skills_count": len(detected_skills),
+            "top_category": categories[0],
+            "all_predicted_categories": categories,
+            "category_probabilities": probabilities,
+            "skill_match_note": (
+                "Persentase skill matching berbeda dari "
+                "probabilitas kategori classifier. "
+                "Jika skill_match_available=False, "
+                "persyaratan skill belum diketahui."
+            )
+        }
+
+        return {
+            "status": "success",
+            "predicted_category": categories[0],
+            "all_predicted_categories": categories,
+            "top_recommendations": recommendations,
+            "detected_skills": detected_skills,
+            "skill_gaps": skill_gaps,
+            "learning_path": _build_learning_path(
+                recommendations
+            ),
+            "profile_summary": profile_summary
+        }
+
+    except Exception:
+        logger.exception(
+            "Gagal menghasilkan rekomendasi karier."
+        )
+        return {
+            "status": "error",
+            "error": "Proses rekomendasi karier gagal."
+        }
+
+
+def validate_cv_text(
+    cv_text: str,
+    min_length: int = 50
+) -> Tuple[bool, str]:
+    if not isinstance(cv_text, str):
+        return False, "CV text harus berupa string."
+
+    if not cv_text.strip():
+        return False, "CV text tidak boleh kosong."
 
     if len(cv_text.strip()) < min_length:
-        return False, f"CV text terlalu pendek (minimum {min_length} karakter)"
+        return (
+            False,
+            f"CV text terlalu pendek (minimal {min_length} karakter)."
+        )
 
     return True, "OK"
 
 
 def reset_cache():
-    """Reset global model cache (untuk testing)."""
-    global _classifier, _vectorizer, _job_roles_df, _skills_database
+    global _classifier, _vectorizer
+    global _job_roles_df, _skills_database
+
     _classifier = None
     _vectorizer = None
     _job_roles_df = None
     _skills_database = None
-
-
-if __name__ == "__main__":
-    # Simple test
-    test_cv = """
-    Senior Software Engineer dengan 5+ tahun pengalaman di backend development.
-    Keahlian: Python, Django, PostgreSQL, AWS, Docker, Kubernetes.
-    Pengalaman dengan microservices dan REST API development.
-    """
-
-    result = recommend_career(test_cv)
-    print(json.dumps(result, indent=2, ensure_ascii=False))
