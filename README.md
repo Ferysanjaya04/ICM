@@ -32,7 +32,7 @@ Autentikasi JWT, dashboard pengguna, serta riwayat analisis dan rekomendasi kari
 
 ---
 
-## 🛠️ Tech Stack
+##  Tech Stack
 
 | Frontend | Backend | Database | AI / ML |
 |---|---|---|---|
@@ -60,7 +60,7 @@ ICM/
 
 ---
 
-## 🚀 Quick Start
+##  Quick Start
 
 **1. Clone Repository**
 
