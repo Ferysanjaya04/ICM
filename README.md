@@ -1,6 +1,6 @@
 # ICM — IT Career CV Analyzer & Recommendation Engine
 
-**Your Smart Path to an IT Career **
+Your Smart Path to an IT Career 
 
 > Platform berbasis **Artificial Intelligence (AI)** yang membantu pengguna menganalisis CV, mengukur kecocokan dengan lowongan pekerjaan, dan menemukan rekomendasi karier IT yang sesuai dengan profil serta keterampilan mereka.
 
