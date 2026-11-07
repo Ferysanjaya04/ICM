@@ -1,6 +1,6 @@
-# ✦ ICM — IT Career CV Analyzer & Recommendation Engine
+# ICM — IT Career CV Analyzer & Recommendation Engine
 
-**Your Smart Path to an IT Career 🚀**
+**Your Smart Path to an IT Career **
 
 > Platform berbasis **Artificial Intelligence (AI)** yang membantu pengguna menganalisis CV, mengukur kecocokan dengan lowongan pekerjaan, dan menemukan rekomendasi karier IT yang sesuai dengan profil serta keterampilan mereka.
 
@@ -12,21 +12,21 @@
 
 ---
 
-## ✨ Fitur Unggulan
+## fitur Unggulan
 
-**🎯 AI CV & Job Matching**
+**AI CV & Job Matching**
 
 Menganalisis kecocokan CV dengan deskripsi lowongan kerja menggunakan **SentenceTransformer (`all-MiniLM-L6-v2`)** dan *Cosine Similarity*, dilengkapi compatibility score dan skill gap analysis.
 
-**🧠 AI Career Recommendation**
+**AI Career Recommendation**
 
 Merekomendasikan **Top 3 karier IT** menggunakan **TF-IDF dan Logistic Regression**, lengkap dengan keterampilan yang terdeteksi dan personalized learning path.
 
-**📄 Resume Management**
+**Resume Management**
 
 Upload dan kelola CV dalam format PDF atau DOCX.
 
-**🔐 Dashboard & History**
+**Dashboard & History**
 
 Autentikasi JWT, dashboard pengguna, serta riwayat analisis dan rekomendasi karier.
 
@@ -40,7 +40,7 @@ Autentikasi JWT, dashboard pengguna, serta riwayat analisis dan rekomendasi kari
 
 ---
 
-## 📁 Struktur Proyek
+## Struktur Proyek
 
 ```text
 ICM/
@@ -97,7 +97,7 @@ Buka **http://127.0.0.1:5500/login.html**
 
 ---
 
-## 👨‍💻 Development Team
+## Development Team
 
 **Kelompok 12 — Pemrograman Internet II**
 
