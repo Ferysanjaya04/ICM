@@ -24,14 +24,18 @@ function hideAuthMessage() {
   if (element) {
     element.hidden = true;
     element.textContent = "";
+    document.querySelectorAll('[data-validation-error]').forEach(e => e.remove());
+    document.querySelectorAll('[aria-invalid="true"]').forEach(e => {
+      e.removeAttribute('aria-invalid');
+      e.removeAttribute('aria-describedby');
+    });
   }
 }
 
 function setSubmitLoading(button, loading, defaultText) {
   if (!button) return;
 
-  button.disabled = loading;
-  button.textContent = loading ? "Memproses..." : defaultText;
+  setRequestLoading(button, loading, loading ? "Memproses..." : defaultText);
 }
 
 const loginForm = document.getElementById("login-form");
@@ -49,6 +53,8 @@ if (loginForm) {
 
     const button =
       document.getElementById("login-button");
+
+    if (button.disabled) return;
 
     if (!username || !password) {
       showAuthMessage("Username dan password wajib diisi.");
@@ -78,7 +84,7 @@ if (loginForm) {
       window.location.replace("./dashboard.html");
 
     } catch (error) {
-      AuthStorage.clear();
+      AuthStorage.clearLocal();
       showAuthMessage(error.message);
 
     } finally {
@@ -108,6 +114,8 @@ if (registerForm) {
 
     const button =
       document.getElementById("register-button");
+
+    if (button.disabled) return;
 
     if (!username || !email || !password) {
       showAuthMessage("Semua field wajib diisi.");
@@ -142,6 +150,20 @@ if (registerForm) {
 
     } catch (error) {
       showAuthMessage(error.message);
+      for (const [field, messages] of Object.entries(error.details || {})) {
+        const input = document.getElementById(field);
+        const detail = document.createElement('p');
+        detail.dataset.validationError = 'true';
+        detail.id = `${field}-error`;
+        detail.textContent = messages.join(' ');
+        detail.className = 'auth-field-error';
+        if (input) {
+          input.setAttribute('aria-invalid', 'true');
+          input.setAttribute('aria-describedby', detail.id);
+          input.after(detail);
+        } else document.getElementById('register-message').append(detail);
+      }
+      document.querySelector('[aria-invalid="true"]')?.focus();
 
     } finally {
       setSubmitLoading(button, false, "Create Account");

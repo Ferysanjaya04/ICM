@@ -424,13 +424,15 @@ class AnalysisService:
 
             return processed_result
 
-        except Exception:
-            logger.exception(
+        except Exception as exc:
+            # Parser/database exceptions may embed input or evidence. Log only type/IDs.
+            logger.error(
                 "[Feature 1][%s] Analisis gagal | "
-                "CV=%s | Durasi sebelum gagal=%.3f detik",
+                "CV=%s | Durasi sebelum gagal=%.3f detik | Error type=%s",
                 request_id,
                 filename,
                 AnalysisService._elapsed(total_start),
+                type(exc).__name__,
             )
             raise
 
@@ -492,7 +494,10 @@ class AnalysisService:
                 compatibility["score"]
             )
 
-            if compatibility_score is None:
+            if compatibility_score is None and not (
+                compatibility.get("level") == "UNDETERMINED"
+                and all(scores.get(name) is None for name in ("semantic", "skill", "experience", "education"))
+            ):
                 raise ValueError(
                     "Skor compatibility tidak boleh None"
                 )
@@ -525,16 +530,28 @@ class AnalysisService:
                 "missing_skills": missing_skills,
                 "recommendations": recommendations,
 
+                "analysis_metadata": {
+                    "schema_version": "1.0",
+                    "cv_understanding": result.get("cv_understanding", {}),
+                    "job_required_skills": skills.get("job_requirement", []),
+                    "job_understanding": result.get("job_understanding", {}),
+                    "scoring_info": result.get("scoring_info", {}),
+                    "experience": result.get("experience", {}),
+                    "education": result.get("education", {}),
+                    "semantic_model": "all-MiniLM-L6-v2",
+                    "semantic_input": result.get("semantic_input", {}),
+                },
+
                 # Mempertahankan kompatibilitas kode sebelumnya.
                 "_raw_result": result,
             }
 
         except (KeyError, TypeError, ValueError) as exc:
-            logger.exception(
-                "[Feature 1][Result] Format hasil Feature 1 tidak valid"
+            logger.error(
+                "[Feature 1][Result] Format hasil tidak valid | Error type=%s", type(exc).__name__,
             )
             raise ValueError(
-                f"Format hasil Feature 1 tidak valid: {exc}"
+                "Format hasil Feature 1 tidak valid"
             ) from exc
 
     # --------------------------------------------------------
@@ -552,6 +569,8 @@ class AnalysisService:
         job_description = job_match.job_description_text or ""
         matched_skills = job_match.matched_skills or []
         missing_skills = job_match.missing_skills or []
+        from resumes.extraction import unknown_extraction_quality
+        saved_quality = (job_match.analysis_metadata or {}).get('extraction_quality') or unknown_extraction_quality()
 
         return {
             "id": str(job_match.id),
@@ -605,6 +624,8 @@ class AnalysisService:
             },
 
             "recommendations": job_match.recommendations or [],
+            "analysis_metadata": job_match.analysis_metadata or {},
+            "extraction_quality": saved_quality,
             "created_at": (
                 job_match.created_at.isoformat()
                 if job_match.created_at

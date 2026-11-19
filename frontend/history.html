@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -8,28 +7,23 @@
 
   <title>History | ICM Career Intelligence</title>
 
+  <link rel="stylesheet" href="./css/design-system.css">
   <link rel="stylesheet" href="./css/style.css">
   <link rel="stylesheet" href="./css/dashboard.css">
   <link rel="stylesheet" href="./css/history.css">
+  <link rel="stylesheet" href="./css/app.css">
 </head>
 <body class="dashboard-page">
 
-  <div class="app-loading" id="history-loading">
-    Memeriksa sesi ICM...
+  <div class="app-loading icm-card" id="history-loading" style="display: flex; align-items: center; justify-content: center;">
+    <span class="icm-spinner" style="margin-right: 12px;"></span> Memeriksa sesi ICM...
   </div>
 
   <div id="history-app" class="history-page" hidden>
-    <header class="history-topbar">
-      <a href="./dashboard.html" class="history-brand">
-        <span>✦</span> ICM.
-      </a>
-      <div class="history-topbar-actions">
-        <span id="history-user">ICM Member</span>
-        <a href="./dashboard.html">← Dashboard</a>
-      </div>
-    </header>
+    <header class="app-header"><div class="app-header-inner"><a class="app-brand" href="./dashboard.html"><span class="brand-symbol" aria-hidden="true">✦</span><span>ICM<span class="brand-dot">.</span></span><span class="brand-caption">Career Intelligence</span></a><button type="button" id="menu-button" aria-expanded="false" aria-controls="sidebar" aria-label="Buka navigasi">☰</button><nav id="sidebar" class="app-navigation" aria-label="Navigasi utama"><a href="./dashboard.html" class="nav-link">Dashboard</a><a href="./job-match.html" class="nav-link">AI CV & Job</a><a href="./career.html" class="nav-link">AI Resume</a><a href="./resumes.html" class="nav-link">My Resumes</a><a href="./history.html" class="nav-link" aria-current="page">History</a><a href="./job-match.html" class="button button-primary nav-mobile-action">Analisis Baru</a><button class="nav-mobile-action" type="button" data-logout>Logout</button></nav><div class="app-actions"><span id="history-user" class="account-name">Akun</span><a href="./job-match.html" class="button button-primary">＋ Analisis Baru</a><button type="button" id="logout-button" class="account-button" aria-label="Keluar dari akun">Logout ↗</button></div></div></header><button type="button" id="sidebar-overlay" tabindex="-1" class="nav-overlay" aria-label="Tutup navigasi" hidden></button>
 
     <main class="history-container">
+
       <div class="history-heading">
         <span class="history-eyebrow">YOUR CAREER WORKSPACE</span>
         <h1>Analysis History</h1>
@@ -40,11 +34,11 @@
       </div>
 
       <div class="history-stats">
-        <article class="history-stat">
+        <article class="history-stat icm-card scroll-reveal">
           <span>Job Matching Reports</span>
           <strong id="match-total">—</strong>
         </article>
-        <article class="history-stat">
+        <article class="history-stat icm-card scroll-reveal">
           <span>Career AI Reports</span>
           <strong id="career-total">—</strong>
         </article>
@@ -53,23 +47,23 @@
       <div class="history-tabs" role="group"
            aria-label="Jenis riwayat">
         <button type="button" id="tab-matches"
-                class="history-tab active"
+                class="history-tab icm-btn icm-btn-secondary"
                 aria-pressed="true">
           CV & Job Matching
         </button>
         <button type="button" id="tab-career"
-                class="history-tab"
+                class="history-tab icm-btn icm-btn-secondary"
                 aria-pressed="false">
           Career Recommendations
         </button>
       </div>
 
-      <section class="history-panel">
+      <section class="history-panel icm-card scroll-reveal">
         <div class="history-panel-header">
           <h2 id="history-section-title">
             Job Matching History
           </h2>
-          <button type="button" id="history-refresh">
+          <button type="button" id="history-refresh" class="icm-btn icm-btn-secondary">
             ↻ Refresh
           </button>
         </div>
@@ -93,6 +87,9 @@
   </div>
 
   <script src="./js/api.js"></script>
+<script src="./js/ui.js"></script>
+  <script src="./js/transparency.js"></script>
   <script src="./js/history.js"></script>
+  <script src="./js/animations.js"></script>
 </body>
 </html>

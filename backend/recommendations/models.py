@@ -73,8 +73,13 @@ class TopRole(models.Model):
 
     match_percentage = models.DecimalField(
         max_digits=5,
-        decimal_places=2
+        decimal_places=2,
+        null=True,
+        blank=True,
     )
+
+    # Per-role snapshot: classifier probability, reference, evidence coverage and gaps.
+    match_details = models.JSONField(default=dict, blank=True)
 
     rank = models.PositiveSmallIntegerField()
 

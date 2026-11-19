@@ -19,7 +19,8 @@ class ResumeUploadTests(TestCase):
         self.addCleanup(self.temp_media.cleanup)
 
         override = override_settings(
-            MEDIA_ROOT=self.temp_media.name
+            MEDIA_ROOT=self.temp_media.name + "/legacy",
+            PRIVATE_RESUME_ROOT=self.temp_media.name + "/private",
         )
         override.enable()
         self.addCleanup(override.disable)

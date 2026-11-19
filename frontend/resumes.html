@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -8,33 +7,23 @@
 
   <title>My Resumes | ICM</title>
 
+  <link rel="stylesheet" href="./css/design-system.css">
   <link rel="stylesheet" href="./css/style.css">
   <link rel="stylesheet" href="./css/dashboard.css">
   <link rel="stylesheet" href="./css/resumes.css">
+  <link rel="stylesheet" href="./css/app.css">
 </head>
-
 <body class="dashboard-page">
 
-  <div id="page-loading" class="app-loading">
-    Memeriksa sesi...
+  <div id="page-loading" class="app-loading icm-card" style="display: flex; align-items: center; justify-content: center;">
+    <span class="icm-spinner" style="margin-right: 12px;"></span> Memeriksa sesi...
   </div>
 
   <main id="resumes-app"
         class="resumes-layout"
         hidden>
 
-    <header class="resumes-header">
-      <a href="./dashboard.html" class="resumes-brand">
-        <span>✦</span> ICM.
-      </a>
-
-      <div class="resumes-header-right">
-        <span id="current-user">Memuat akun...</span>
-        <a href="./dashboard.html" class="back-link">
-          ← Dashboard
-        </a>
-      </div>
-    </header>
+    <header class="app-header"><div class="app-header-inner"><a class="app-brand" href="./dashboard.html"><span class="brand-symbol" aria-hidden="true">✦</span><span>ICM<span class="brand-dot">.</span></span><span class="brand-caption">Career Intelligence</span></a><button type="button" id="menu-button" aria-expanded="false" aria-controls="sidebar" aria-label="Buka navigasi">☰</button><nav id="sidebar" class="app-navigation" aria-label="Navigasi utama"><a href="./dashboard.html" class="nav-link">Dashboard</a><a href="./job-match.html" class="nav-link">AI CV & Job</a><a href="./career.html" class="nav-link">AI Resume</a><a href="./resumes.html" class="nav-link" aria-current="page">My Resumes</a><a href="./history.html" class="nav-link">History</a><a href="./job-match.html" class="button button-primary nav-mobile-action">Analisis Baru</a><button class="nav-mobile-action" type="button" data-logout>Logout</button></nav><div class="app-actions"><span id="current-user" class="account-name">Akun</span><a href="./job-match.html" class="button button-primary">＋ Analisis Baru</a><button type="button" id="logout-button" class="account-button" aria-label="Keluar dari akun">Logout ↗</button></div></div></header><button type="button" id="sidebar-overlay" tabindex="-1" class="nav-overlay" aria-label="Tutup navigasi" hidden></button>
 
     <div class="resumes-container">
 
@@ -52,7 +41,7 @@
 
       <div class="resumes-grid">
 
-        <section class="resume-panel">
+        <section class="resume-panel icm-card scroll-reveal">
           <div class="panel-heading">
             <h2>Upload New CV</h2>
             <span class="panel-label">PDF / DOCX</span>
@@ -66,7 +55,6 @@
               <span class="upload-symbol">⇧</span>
 
               <strong>Pilih file CV</strong>
-
               <span>
                 Klik untuk memilih dokumen PDF atau DOCX
               </span>
@@ -97,14 +85,14 @@
 
             <button
               type="submit"
-              class="btn-primary"
+              class="icm-btn icm-btn-primary"
               id="upload-button">
               Upload CV
             </button>
           </form>
         </section>
 
-        <section class="resume-panel">
+        <section class="resume-panel icm-card scroll-reveal">
           <div class="panel-heading">
             <h2>Your CV Library</h2>
             <span class="resume-count" id="resume-count">
@@ -132,7 +120,7 @@
           <button
             type="button"
             id="refresh-button"
-            class="refresh-button">
+            class="icm-btn icm-btn-secondary refresh-button">
             ↻ Refresh List
           </button>
         </section>
@@ -148,6 +136,8 @@
   </main>
 
   <script src="./js/api.js"></script>
+<script src="./js/ui.js"></script>
   <script src="./js/resumes.js"></script>
+  <script src="./js/animations.js"></script>
 </body>
 </html>

@@ -251,3 +251,119 @@ class Feature1APITests(TestCase):
         )
 
         self.assertEqual(response.status_code, 404)
+
+
+    @patch("lib.feature1.calculate_semantic_score", return_value=80.0)
+    def test_real_understanding_metadata_survives_service_database_detail_and_history(self, semantic):
+        cv = ("Keahlian: Python\nProyek: Built PRIVATE_EVIDENCE_MARKER using Django.\n"
+              "Summary: No Docker experience. Interested in learning Kubernetes.")
+        self.resume.extracted_text = cv
+        self.resume.save(update_fields=["extracted_text"])
+        with self.assertLogs("analysis.services", level="INFO") as logs:
+            response = self._post_match({
+                "resume_id": str(self.resume.pk),
+                "job_text": "Python Django Docker Kubernetes. Minimum 2 years experience. Bachelor in Computer Science.",
+            })
+        self.assertEqual(response.status_code, 201, response.data)
+        semantic.assert_called_once()
+        data = response.data["data"]
+        self.assertTrue({"id", "resume_id", "compatibility", "scores", "skills", "recommendations", "created_at"}.issubset(data))
+        self.assertEqual(data["skills"]["matched"], ["django", "python"])
+        self.assertEqual(data["skills"]["missing"], ["docker", "kubernetes"])
+        self.assertEqual(data["scores"]["skill"], 50.0)
+        self.assertIsNone(data["scores"]["experience"])
+        self.assertIsNone(data["scores"]["education"])
+        metadata = data["analysis_metadata"]
+        self.assertEqual(metadata["scoring_info"]["observed_weight"], .65)
+        self.assertIn("job_understanding", metadata)
+        self.assertEqual(metadata["job_understanding"]["scoring_skills"], ["django", "docker", "kubernetes", "python"])
+        self.assertEqual(metadata["scoring_info"]["assessment_status"], "partial")
+        self.assertEqual(metadata["cv_understanding"]["engine_version"], "ai3b.1")
+        for skill in metadata["cv_understanding"]["skills"]:
+            self.assertEqual(skill["claim_status"], "reported_positive")
+            self.assertEqual(skill["proficiency"], "unspecified")
+            self.assertIn("skill_kind", skill)
+            self.assertTrue(all("claim_status" in item for item in skill["evidence_items"]))
+        self.assertEqual({s["name"] for s in metadata["cv_understanding"]["excluded_skill_mentions"]}, {"docker", "kubernetes"})
+        self.assertTrue(any("PRIVATE_EVIDENCE_MARKER" in s["evidence"] for s in metadata["cv_understanding"]["skills"]))
+        self.assertNotIn("PRIVATE_EVIDENCE_MARKER", "\n".join(logs.output))
+        self.assertNotIn("No Docker experience", "\n".join(logs.output))
+        match = JobMatch.objects.get(pk=data["id"])
+        self.assertEqual(match.analysis_metadata, metadata)
+        # Subsequent CV/parser changes must not rewrite a historical explanation.
+        self.resume.extracted_text = "Skills: Docker, Kubernetes"
+        self.resume.save(update_fields=["extracted_text"])
+        detail = self.client.get(f"/api/analysis/match/{match.pk}/")
+        history = self.client.get("/api/analysis/matches/")
+        self.assertEqual(detail.data["data"]["analysis_metadata"], metadata)
+        self.assertEqual(history.data["data"]["results"][0]["analysis_metadata"], metadata)
+
+    @patch("analysis.views.AnalysisService.analyze_cv_vs_job")
+    def test_undetermined_result_is_not_replaced_by_zero_or_saved(self, analyze):
+        analyze.return_value = {
+            "compatibility_score": None, "compatibility_level": "UNDETERMINED",
+            "semantic_score": None, "skill_score": None,
+            "experience_score": None, "education_score": None,
+            "analysis_metadata": {"scoring_info": {"assessment_status": "undetermined", "observed_weight": 0}},
+        }
+        response = self._post_match({"resume_id": str(self.resume.pk), "job_text": self.job_text})
+        self.assertEqual(response.status_code, 422)
+        self.assertEqual(response.data["error"]["code"], "ANALYSIS_UNDETERMINED")
+        self.assertEqual(response.data["error"]["details"]["scoring_info"]["assessment_status"], "undetermined")
+        self.assertEqual(JobMatch.objects.count(), 0)
+
+    def test_historical_match_without_metadata_does_not_invent_evidence(self):
+        match = JobMatch.objects.create(
+            user=self.user, resume=self.resume, job_description_text=self.job_text,
+            compatibility_score=85, compatibility_level="HIGH", semantic_score=80, skill_score=90,
+        )
+        response = self.client.get(f"/api/analysis/match/{match.pk}/")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["data"]["analysis_metadata"], {})
+
+
+    @patch("analysis.services.analyze_cv_job", side_effect=RuntimeError("PRIVATE_EVIDENCE_MARKER"))
+    def test_parser_exception_does_not_log_or_return_evidence(self, analyze):
+        with self.assertLogs("analysis", level="INFO") as logs:
+            response = self._post_match({"resume_id": str(self.resume.pk), "job_text": self.job_text})
+        self.assertEqual(response.status_code, 500)
+        self.assertNotIn("PRIVATE_EVIDENCE_MARKER", "\n".join(logs.output))
+        self.assertNotIn("PRIVATE_EVIDENCE_MARKER", str(response.data))
+        self.assertEqual(JobMatch.objects.count(), 0)
+
+
+    @patch("lib.feature1.calculate_semantic_score", return_value=80.0)
+    def test_unknown_job_skill_returns_coverage_without_fabricating_zero(self, semantic):
+        response = self._post_match({
+            "resume_id": str(self.resume.pk),
+            "job_text": "Collaborate with colleagues to produce reliable outcomes for customers.",
+        })
+        self.assertEqual(response.status_code, 422)
+        self.assertEqual(response.data["error"]["code"], "JOB_SKILLS_UNDETERMINED")
+        info = response.data["error"]["details"]["scoring_info"]
+        self.assertIn("skill", info["unknown_components"])
+        self.assertIsNone(info["effective_weights"]["skill"])
+        self.assertEqual(JobMatch.objects.count(), 0)
+
+
+    @patch("lib.feature1.calculate_semantic_score", return_value=80.0)
+    def test_structured_job_requirements_and_unknowns_survive_history(self, semantic):
+        self.resume.extracted_text = 'Skills: Python\nInternship\nJunior Data Engineer September 2025 - Desember 2025\nCertifications\nBachelor level Python course.'
+        self.resume.save(update_fields=['extracted_text'])
+        response=self._post_match({'resume_id':str(self.resume.pk), 'job_text':'Required skills: Python\nPreferred skills: Docker\nResponsibilities: Maintain Kubernetes services.\nRequirements: Minimum 1 year professional experience. Bachelor in Computer Science required.'})
+        self.assertEqual(response.status_code,201,response.data)
+        data=response.data['data'];metadata=data['analysis_metadata']
+        self.assertEqual(data['scores']['skill'],100)
+        self.assertIsNone(data['scores']['experience'])
+        self.assertIsNone(data['scores']['education'])
+        self.assertEqual(metadata['job_understanding']['required_skills'],['python'])
+        self.assertEqual(metadata['job_understanding']['preferred_skills'],['docker'])
+        self.assertEqual(metadata['job_understanding']['responsibility_skills'],['kubernetes'])
+        self.assertEqual(metadata['experience']['assessment_status'],'unknown')
+        self.assertEqual(metadata['scoring_info']['observed_weight'],.65)
+        saved=JobMatch.objects.get(pk=data['id'])
+        self.assertEqual(saved.analysis_metadata,metadata)
+        detail=self.client.get(f'/api/analysis/match/{saved.pk}/')
+        history=self.client.get('/api/analysis/matches/')
+        self.assertEqual(detail.data['data']['analysis_metadata'],metadata)
+        self.assertEqual(history.data['data']['results'][0]['analysis_metadata'],metadata)

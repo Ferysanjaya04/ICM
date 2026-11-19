@@ -286,7 +286,7 @@ def analyze_cv_and_job(request):
         )
 
     except ValueError:
-        logger.exception(
+        logger.warning(
             "Validasi atau hasil analisis Feature 1 gagal. "
             "resume_id=%s",
             resume_id,
@@ -301,7 +301,7 @@ def analyze_cv_and_job(request):
         )
 
     except Exception:
-        logger.exception(
+        logger.error(
             "AI Feature 1 gagal dijalankan. resume_id=%s",
             resume_id,
         )
@@ -322,6 +322,23 @@ def analyze_cv_and_job(request):
         logger.error("AnalysisService tidak mengembalikan dictionary.")
         return _internal_error()
 
+    # Immutable input-quality snapshot; scoring availability remains separate.
+    metadata = analysis_result.setdefault('analysis_metadata', {})
+    metadata['extraction_quality'] = resume.extraction_quality
+    metadata['input_assessment_status'] = resume.extraction_quality.get('assessment_status', 'limited_by_extraction')
+
+
+    if (
+        analysis_result.get("compatibility_score") is None
+        and analysis_result.get("compatibility_level") == "UNDETERMINED"
+    ):
+        return error_response(
+            code="ANALYSIS_UNDETERMINED",
+            message="Tidak ada komponen penilaian yang dapat diukur; hasil tidak disimpan.",
+            details={"scoring_info": analysis_result.get("analysis_metadata", {}).get("scoring_info", {})},
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        )
+
     # JobMatch saat ini mewajibkan semantic_score dan
     # skill_score bernilai non-NULL.
     #
@@ -336,6 +353,7 @@ def analyze_cv_and_job(request):
                 "dapat dikenali. Tambahkan keterampilan teknis "
                 "yang dibutuhkan pada deskripsi lowongan."
             ),
+            details={"scoring_info": analysis_result.get("analysis_metadata", {}).get("scoring_info", {})},
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
         )
 
@@ -388,10 +406,11 @@ def analyze_cv_and_job(request):
             matched_skills=analysis_result["matched_skills"],
             missing_skills=analysis_result["missing_skills"],
             recommendations=analysis_result["recommendations"],
+            analysis_metadata=analysis_result.get("analysis_metadata", {}),
         )
 
     except Exception:
-        logger.exception(
+        logger.error(
             "Gagal menyimpan JobMatch. resume_id=%s",
             resume_id,
         )

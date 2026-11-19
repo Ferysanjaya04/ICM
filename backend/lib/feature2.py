@@ -13,16 +13,18 @@ merupakan dua ukuran yang berbeda.
 """
 
 import json
+import hashlib
 import logging
 import re
 import unicodedata
-from difflib import SequenceMatcher
 from pathlib import Path
 from typing import Any, Dict, List, Tuple
 
 import joblib
 import numpy as np
 import pandas as pd
+
+from .cv_understanding import canonical_skill, understand_cv
 
 logger = logging.getLogger(__name__)
 
@@ -43,31 +45,28 @@ _vectorizer = None
 _job_roles_df = None
 _skills_database = None
 
-GENERIC_ROLE_WORDS = {
-    "developer", "engineer", "specialist", "analyst",
-    "administrator", "consultant", "software",
-    "senior", "junior", "lead", "it"
+# Explicit, reviewed aliases to titles that actually exist in job_roles.csv.
+# A missing/ambiguous equivalent is intentionally unknown, never a fuzzy guess.
+CATEGORY_ROLE_ALIASES = {
+    "AI Engineer": ("AI/ML Specialist",),
+    "Blockchain": ("Blockchain Developer",),
+    "Data Science": ("Data Scientist",),
+    "DevOps": ("DevOps Engineer",),
+    "DotNet Developer": ("C# Developer",),
+    "Java Developer": ("Java Backend Developer",),
+    "Mobile Developer": ("Mobile Developer Android", "Mobile Developer iOS"),
+    "Software Developer": ("Software Engineer",),
+    "System Administrator": ("Systems Administrator",),
+    "Testing": ("Software Test Engineer",),
+    "UI/UX Designer": ("UX Designer", "UI Designer"),
+    "Web Designing": ("Web Designer",),
 }
+SKILL_ALIASES = {"rest apis": "rest api", "restful apis": "rest api"}
 
-ROLE_ALIASES = {
-    "back end": "backend",
-    "front end": "frontend",
-    "full stack": "fullstack",
-    "full-stack": "fullstack",
-    "dot net": "dotnet",
-    ".net": "dotnet",
-    "ui ux": "uiux",
-    "ui/ux": "uiux",
-    "user experience": "uiux",
-    "user interface": "uiux",
-    "dev ops": "devops",
-    "data scientist": "datascience",
-    "data science": "datascience",
-    "machine learning": "machinelearning",
-    "quality assurance": "qa",
-    "site reliability": "sre",
-    "cyber security": "cybersecurity",
-}
+
+def normalize_skill(skill):
+    canonical = canonical_skill(skill)
+    return SKILL_ALIASES.get(canonical, canonical)
 
 
 def normalize_text(text: str) -> str:
@@ -80,17 +79,8 @@ def normalize_text(text: str) -> str:
 
 
 def normalize_role_title(title: str) -> str:
-    text = normalize_text(title)
-
-    for original, replacement in sorted(
-        ROLE_ALIASES.items(),
-        key=lambda item: len(item[0]),
-        reverse=True
-    ):
-        text = text.replace(original, replacement)
-
-    text = re.sub(r"[^a-z0-9+#]+", " ", text)
-    return re.sub(r"\s+", " ", text).strip()
+    # No synonym expansion here: role identity must not erase specialization.
+    return re.sub(r"\s+", " ", normalize_text(title)).strip()
 
 
 def _load_model():
@@ -205,29 +195,7 @@ def extract_skills_from_text(
     text: str,
     skills_db: Dict
 ) -> List[str]:
-    normalized_text = normalize_text(text)
-    found = set()
-
-    for skills in skills_db.values():
-        if not isinstance(skills, list):
-            continue
-
-        for skill in skills:
-            normalized_skill = normalize_text(skill)
-
-            if not normalized_skill:
-                continue
-
-            pattern = (
-                r"(?<!\w)" +
-                re.escape(normalized_skill) +
-                r"(?!\w)"
-            )
-
-            if re.search(pattern, normalized_text):
-                found.add(normalized_skill)
-
-    return sorted(found)
+    return sorted({normalize_skill(skill["name"]) for skill in understand_cv(text, skills_db)["skills"]})
 
 
 def parse_required_skills(value: Any) -> List[str]:
@@ -262,7 +230,7 @@ def parse_required_skills(value: Any) -> List[str]:
     seen = set()
 
     for skill in raw_skills:
-        normalized = normalize_text(skill)
+        normalized = normalize_skill(skill) if isinstance(skill, str) else ""
 
         if normalized and normalized not in seen:
             result.append(normalized)
@@ -274,18 +242,15 @@ def parse_required_skills(value: Any) -> List[str]:
 def calculate_skill_match_percentage(
     cv_skills: List[str],
     required_skills: List[str]
-) -> float:
-    """
-    Skor 0 merupakan fallback numerik saat requirements kosong.
-    Periksa skill_match_available sebelum menafsirkan skor.
-    """
+) -> float | None:
+    """Evidence coverage, distinct from classifier probability. Empty requirements are unknown."""
     required = set(parse_required_skills(required_skills))
 
     if not required:
-        return 0.0
+        return None
 
     available = set(parse_required_skills(cv_skills))
-    matched = len(available & required)
+    matched = len(_matched_skills(available, required))
 
     return round(100.0 * matched / len(required), 2)
 
@@ -293,11 +258,11 @@ def calculate_skill_match_percentage(
 def get_skill_gap(
     cv_skills: List[str],
     required_skills: List[str]
-) -> List[str]:
+) -> List[str] | None:
     available = set(parse_required_skills(cv_skills))
     required = set(parse_required_skills(required_skills))
 
-    return sorted(required - available)
+    return sorted(required - set(_matched_skills(available, required))) if required else None
 
 
 def predict_career_categories(
@@ -345,9 +310,9 @@ def predict_career_categories(
             "top_category": categories[0]
         }
 
-    except Exception:
-        logger.exception(
-            "Gagal memprediksi kategori karier Feature 2."
+    except Exception as exc:
+        logger.error(
+            "Gagal memprediksi kategori karier Feature 2 | error_type=%s", type(exc).__name__
         )
 
         return {
@@ -359,131 +324,109 @@ def predict_career_categories(
         }
 
 
-def _role_similarity(
-    predicted_title: str,
-    csv_title: str
-) -> float:
-    predicted = normalize_role_title(predicted_title)
-    candidate = normalize_role_title(csv_title)
-
-    if not predicted or not candidate:
-        return 0.0
-
-    if predicted == candidate:
-        return 1.0
-
-    predicted_tokens = set(predicted.split())
-    candidate_tokens = set(candidate.split())
-
-    predicted_specific = (
-        predicted_tokens - GENERIC_ROLE_WORDS
-    )
-    candidate_specific = (
-        candidate_tokens - GENERIC_ROLE_WORDS
-    )
-
-    shared_specific = predicted_specific & candidate_specific
-
-    # Hindari mencocokkan Backend dan Frontend hanya
-    # karena keduanya sama-sama memiliki kata Developer.
-    if (
-        predicted_specific and candidate_specific
-        and not shared_specific
-    ):
-        return 0.0
-
-    if shared_specific:
-        coverage = (
-            len(shared_specific) /
-            max(len(predicted_specific), 1)
-        )
-        string_similarity = SequenceMatcher(
-            None, predicted, candidate
-        ).ratio()
-
-        return 0.75 * coverage + 0.25 * string_similarity
-
-    # Fallback untuk judul yang hanya berisi kata umum.
-    return 0.4 * SequenceMatcher(
-        None, predicted, candidate
-    ).ratio()
+def _matched_skills(available, required):
+    available = set(available)
+    if "html/css" in available:
+        available.update({"html", "css"})
+    matched = set(available) & set(required)
+    # A bundled HTML/CSS requirement is supported when BOTH components have evidence.
+    if "html/css" in required and {"html", "css"}.issubset(available):
+        matched.add("html/css")
+    return sorted(matched)
 
 
-def find_matching_roles(
-    predicted_category: str,
-    top_n: int = 3
-) -> List[Dict[str, Any]]:
-    """Cari judul pekerjaan yang relevan dengan label model."""
+def salary_metadata(raw_value="", reference=None):
+    """The local reference has no verified currency, period or labour market."""
+    return {
+        "status": "unknown", "currency": None, "payment_period": None,
+        "location": None, "market": None, "raw_reference_range": raw_value or None,
+        "source": reference, "note": "Reference range lacks currency, payment period and market; not a verified salary estimate.",
+    }
+
+
+def find_matching_roles(predicted_category: str, top_n: int = 3) -> List[Dict[str, Any]]:
     roles_df = _load_job_roles()
-
+    targets = CATEGORY_ROLE_ALIASES.get(predicted_category, (predicted_category,))
+    order = {normalize_role_title(title): index for index, title in enumerate(targets)}
     candidates = []
-
-    for _, row in roles_df.iterrows():
+    for index, row in roles_df.iterrows():
         title = str(row.get("job title", "")).strip()
-
-        if not title:
+        if normalize_role_title(title) not in order:
             continue
-
-        similarity = _role_similarity(
-            predicted_category, title
-        )
-
-        if similarity < 0.55:
-            continue
-
-        role = {
+        candidates.append({
             "job title": title,
             "category": str(row.get("category", "")),
-            "required_skills": parse_required_skills(
-                row.get("required skills", "")
-            ),
-            "salary range": str(
-                row.get("salary range", "")
-            ),
-            "education requirement": str(
-                row.get("education requirement", "")
-            ),
-            "experience years": row.get(
-                "experience years", ""
-            ),
-            "_title_similarity": similarity
-        }
-
-        candidates.append(role)
-
-    candidates.sort(
-        key=lambda item: item["_title_similarity"],
-        reverse=True
-    )
-
+            "required_skills": parse_required_skills(row.get("required skills", "")),
+            "salary range": str(row.get("salary range", "")),
+            "reference_row": int(index) + 2,
+            "required_skills_original": str(row.get("required skills", "")),
+            "mapping_method": "explicit_alias" if predicted_category in CATEGORY_ROLE_ALIASES else "exact_title",
+        })
+    candidates.sort(key=lambda role: (order[normalize_role_title(role["job title"])], role["reference_row"]))
     return candidates[:max(0, int(top_n))]
+
+
+def _evidence_profile(cv_text):
+    # This is a skill-evidence lexicon, NOT the trained TF-IDF vocabulary.
+    vocabulary = dict(_load_skills_database())
+    reference_skills = []
+    reference_families = set()
+    classifier, _ = _load_model()
+    if len(classifier.classes_) != 30:
+        raise ValueError("Feature 2 requires the existing 30-category classifier.")
+    for category in classifier.classes_:
+        for role in find_matching_roles(str(category), top_n=20):
+            reference_skills.extend(role["required_skills"])
+            if role["category"]:
+                reference_families.add(role["category"])
+    # Recognize explicit skills from adjacent IT/data/design reference roles too
+    # (e.g. Tableau/Power BI), without assigning those roles to a classifier label.
+    for _, row in _load_job_roles().iterrows():
+        if row.get("category", "") in reference_families:
+            reference_skills.extend(parse_required_skills(row.get("required skills", "")))
+    vocabulary["feature2_reference_skills"] = sorted(set(reference_skills))
+    vocabulary["feature2_literal_variants"] = list(SKILL_ALIASES)
+    profile = understand_cv(cv_text, vocabulary)
+    # Consolidate positive variants while retaining their independent evidence.
+    skills = {}
+    for item in profile["skills"]:
+        name = normalize_skill(item["name"])
+        record = {**item, "name": name, "evidence_items": [
+            {**mention, "name": name} for mention in item["evidence_items"]
+        ]}
+        if name in skills:
+            skills[name]["evidence_items"].extend(record["evidence_items"])
+        else:
+            skills[name] = record
+    if any(len(item["evidence_items"]) > 5 for item in skills.values()):
+        profile["quality_warnings"].append("Alias evidence consolidated with a limit of 5 positive excerpts per canonical skill.")
+        for item in skills.values():
+            item["evidence_items"] = item["evidence_items"][:5]
+    profile["skills"] = [skills[name] for name in sorted(skills)]
+    profile["excluded_skill_mentions"] = [
+        {**item, "name": normalize_skill(item["name"])} for item in profile["excluded_skill_mentions"]
+    ]
+    profile["skill_vocabulary_source"] = "base skills_database + CSV terms in reference families covered by validated mappings; TF-IDF vocabulary unchanged"
+    return profile
 
 
 def _build_learning_path(
     recommendations: List[Dict[str, Any]]
 ) -> List[Dict[str, Any]]:
     learning_path = []
-
     for recommendation in recommendations:
         missing = recommendation["missing_skills"]
-
+        available = recommendation["skill_match_available"]
         learning_path.append({
-            "rank": recommendation["rank"],
-            "role_title": recommendation["role_title"],
-            "suggested_skills": missing,
-            "steps": [
-                {
-                    "step": index,
-                    "skill": skill,
-                    "activity": (
-                        f"Pelajari dasar {skill}, "
-                        "lalu buat latihan atau proyek kecil."
-                    )
-                }
-                for index, skill in enumerate(missing, 1)
-            ]
+            "rank": recommendation["rank"], "role_title": recommendation["role_title"],
+            "status": "unknown_requirements" if not available else ("evidence_gap" if missing else "covered_by_evidence"),
+            "suggested_skills": missing or [],
+            "note": "Belum terdeteksi bukan bukti tidak memiliki skill; verifikasi kebutuhan role dan bukti CV.",
+            "steps": [{
+                "step": index, "skill": skill,
+                "activity": f"Jika sudah menguasai {skill}, tambahkan bukti penggunaannya di CV; jika belum, pelajari dasar dan buat latihan/proyek kecil.",
+            } for index, skill in enumerate(missing or [], 1)],
         })
-
     return learning_path
 
 
@@ -497,11 +440,8 @@ def recommend_career(cv_text: str) -> Dict[str, Any]:
         }
 
     try:
-        skills_db = _load_skills_database()
-
-        detected_skills = extract_skills_from_text(
-            cv_text, skills_db
-        )
+        profile = _evidence_profile(cv_text)
+        detected_skills = [item["name"] for item in profile["skills"]]
 
         prediction = predict_career_categories(
             cv_text, top_k=3
@@ -525,17 +465,30 @@ def recommend_career(cv_text: str) -> Dict[str, Any]:
                 predicted_category, top_n=20
             )
 
-            selected_role = None
-
-            for candidate in matched_roles:
-                key = normalize_role_title(
-                    candidate["job title"]
-                )
-
-                if key not in used_job_titles:
-                    selected_role = candidate
-                    used_job_titles.add(key)
-                    break
+            candidates = [role for role in matched_roles if normalize_role_title(role["job title"]) not in used_job_titles]
+            # Evidence may select a representative WITHIN the same predicted category;
+            # it never reorders categories or alters their probabilities.
+            candidates.sort(key=lambda role: (
+                -len(_matched_skills(detected_skills, role["required_skills"])),
+                -(calculate_skill_match_percentage(detected_skills, role["required_skills"]) or 0),
+                role["reference_row"],
+            ))
+            selected_role = candidates[0] if candidates else None
+            specialization_evidence = {}
+            if len(candidates) > 1:
+                common = set.intersection(*(set(role["required_skills"]) for role in candidates))
+                specialization_evidence = {role["job title"]: _matched_skills(detected_skills, set(role["required_skills"]) - common) for role in candidates}
+                candidates.sort(key=lambda role: (
+                    -len(_matched_skills(detected_skills, set(role["required_skills"]) - common)),
+                    -len(_matched_skills(detected_skills, role["required_skills"])), role["reference_row"],
+                ))
+                selected_role = candidates[0]
+                best_evidence = len(_matched_skills(detected_skills, set(selected_role["required_skills"]) - common))
+                tied = sum(len(_matched_skills(detected_skills, set(role["required_skills"]) - common)) == best_evidence for role in candidates)
+                if not best_evidence or tied != 1:
+                    selected_role = None  # No distinct evidence winner: never resolve specialization by CSV row order.
+            if selected_role:
+                used_job_titles.add(normalize_role_title(selected_role["job title"]))
 
             if selected_role:
                 role_title = selected_role["job title"]
@@ -569,25 +522,65 @@ def recommend_career(cv_text: str) -> Dict[str, Any]:
                 detected_skills, required_skills
             )
 
+            reference = {
+                "dataset": "data/raw/job_roles.csv", "row": selected_role["reference_row"],
+                "role_title": selected_role["job title"],
+                "required_skills_original": selected_role["required_skills_original"],
+                "sha256": hashlib.sha256(JOB_ROLES_PATH.read_bytes()).hexdigest(),
+                "scope": "local role reference; not requirements of a specific employer",
+            } if selected_role else None
+            salary = salary_metadata(salary_range, reference)
+            matched_evidence = {}
+            for skill in _matched_skills(detected_skills, required_skills):
+                evidence_names = {skill}
+                if skill == "html/css":
+                    evidence_names.update({"html", "css"})
+                if skill in {"html", "css"}:
+                    evidence_names.add("html/css")
+                matched_evidence[skill] = [item for item in profile["skills"] if item["name"] in evidence_names]
+
             recommendations.append({
                 "rank": rank,
                 "role_title": role_title,
                 "category": category,
                 "predicted_category": predicted_category,
-                "category_probability": probabilities.get(
-                    predicted_category, 0.0
-                ),
+                "category_probability": probabilities[predicted_category],
                 "match_percentage": match_percentage,
                 "skill_match_available": skill_match_available,
                 "required_skills": required_skills,
                 "missing_skills": missing_skills,
-                "salary_range": salary_range,
-                "source": source
+                "salary_range": "",  # Frontend must not show an unverified numeric salary.
+                "salary_metadata": salary,
+                "requirements_status": "known" if skill_match_available else "unknown",
+                "requirements_scope": "reference_role" if skill_match_available else "unknown",
+                "specialization_status": ("evidence_supported" if len(matched_roles) > 1 else "category_reference") if selected_role else "unknown",
+                "skill_evidence": matched_evidence if skill_match_available else None,
+                "source": source,
+                "skill_match_status": "known" if skill_match_available else "unknown",
+                "matched_skills": _matched_skills(detected_skills, required_skills) if skill_match_available else None,
+                "skill_match_note": (
+                    "Cakupan requirements yang didukung bukti CV; 0% bukan bukti kandidat tidak mampu."
+                    if skill_match_available else "Requirements role belum dapat dipastikan dari referensi; persentase dan gap unknown."
+                ),
+                "mapping_status": "mapped" if selected_role else ("ambiguous_specialization" if matched_roles else "unknown_reference"),
+                "mapping_scope": "representative_reference" if selected_role else "classifier_category_only",
+                "specialization_evidence": specialization_evidence,
+                "mapping_method": selected_role["mapping_method"] if selected_role else None,
+                "reference": reference,
             })
 
+            used_job_titles.add(normalize_role_title(role_title))
             skill_gaps[role_title] = missing_skills
 
         profile_summary = {
+            "schema_version": "ai3d.1",
+            "cv_understanding": profile,
+            "role_recommendations": recommendations,
+            "skill_gaps": skill_gaps,
+            "model": {"classifier": "LogisticRegression", "vectorizer": "TfidfVectorizer", "classes": 30,
+                      "artifact_sha256": hashlib.sha256(MODEL_PATH.read_bytes()).hexdigest()},
+            "reference_sha256": hashlib.sha256(JOB_ROLES_PATH.read_bytes()).hexdigest(),
+            "ranking_policy": "Top 3 raw classifier probabilities; skill coverage never reranks categories",
             "cv_length": len(cv_text),
             "detected_skills_count": len(detected_skills),
             "top_category": categories[0],
@@ -614,9 +607,9 @@ def recommend_career(cv_text: str) -> Dict[str, Any]:
             "profile_summary": profile_summary
         }
 
-    except Exception:
-        logger.exception(
-            "Gagal menghasilkan rekomendasi karier."
+    except Exception as exc:
+        logger.error(
+            "Gagal menghasilkan rekomendasi karier | error_type=%s", type(exc).__name__
         )
         return {
             "status": "error",

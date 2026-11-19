@@ -1,3 +1,7 @@
+from django.contrib.auth.password_validation import validate_password
+from django.contrib.auth.validators import UnicodeUsernameValidator
+from django.core.exceptions import ValidationError as DjangoValidationError
+from rest_framework import serializers
 from django.contrib.auth.models import User
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework import status
@@ -12,15 +16,26 @@ class RegisterView(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request):
-        username = request.data.get("username")
-        email = request.data.get("email")
-        password = request.data.get("password")
-
-        if not username or not email or not password:
+        fields = serializers.Serializer(data=request.data)
+        fields.fields.update({
+            "username": serializers.CharField(max_length=150, validators=[UnicodeUsernameValidator()]),
+            "email": serializers.EmailField(max_length=254),
+            "password": serializers.CharField(trim_whitespace=False, write_only=True),
+        })
+        if not fields.is_valid():
             return error_response(
-                code="VALIDATION_ERROR",
-                message="username, email, dan password wajib diisi.",
-                status_code=status.HTTP_400_BAD_REQUEST,
+                code="VALIDATION_ERROR", message="Data registrasi tidak valid.",
+                details=fields.errors, status_code=status.HTTP_400_BAD_REQUEST,
+            )
+        username = fields.validated_data["username"]
+        email = fields.validated_data["email"]
+        password = fields.validated_data["password"]
+        try:
+            validate_password(password, User(username=username, email=email))
+        except DjangoValidationError as exc:
+            return error_response(
+                code="VALIDATION_ERROR", message="Password tidak memenuhi persyaratan.",
+                details={"password": exc.messages}, status_code=status.HTTP_400_BAD_REQUEST,
             )
 
         if User.objects.filter(username=username).exists():

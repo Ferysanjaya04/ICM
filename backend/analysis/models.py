@@ -88,6 +88,9 @@ class JobMatch(models.Model):
         default=list
     )
 
+    # Snapshot per match: never recompute historical evidence from a newer parser.
+    analysis_metadata = models.JSONField(default=dict, blank=True)
+
     created_at = models.DateTimeField(
         auto_now_add=True
     )

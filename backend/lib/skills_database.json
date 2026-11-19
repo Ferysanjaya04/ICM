@@ -1,4 +1,3 @@
-
 {
   "Programming": [
     "Python",
@@ -10,7 +9,9 @@
     "C#",
     "PHP",
     "Go",
-    "Rust"
+    "Rust",
+    "Scala",
+    "Bash"
   ],
   "Web Development": [
     "React",
@@ -20,7 +21,9 @@
     "Tailwind CSS",
     "Bootstrap",
     "SASS",
-    "Webpack"
+    "Webpack",
+    "HTML",
+    "CSS"
   ],
   "Backend": [
     "Node.js",
@@ -51,7 +54,9 @@
     "Jenkins",
     "GitLab CI",
     "GitHub Actions",
-    "Terraform"
+    "Terraform",
+    "Linux",
+    "Grafana"
   ],
   "Cloud": [
     "AWS",
@@ -114,7 +119,9 @@
     "OSCP",
     "Security+",
     "Incident Response",
-    "Threat Detection"
+    "Threat Detection",
+    "Wireshark",
+    "Nmap"
   ],
   "UI/UX Design": [
     "Figma",
@@ -135,5 +142,41 @@
     "User Flows",
     "Accessibility",
     "Visual Design"
+  ],
+  "Data Engineering": [
+    "Apache Spark",
+    "PySpark",
+    "Apache Airflow",
+    "Pandas",
+    "dbt",
+    "BigQuery",
+    "Snowflake",
+    "Apache Kafka"
+  ],
+  "Evidence-supported technical terms": [
+    "Django REST Framework",
+    "pytest",
+    "Unit Testing",
+    "Selenium",
+    "API Testing",
+    "Manual Testing",
+    "Test Automation",
+    "Regression Testing",
+    "Test Case Design",
+    "Playwright",
+    "Postman",
+    "Jest",
+    "React Testing Library",
+    "Next.js",
+    "Microsoft Sentinel",
+    "Windows Server",
+    "TCP/IP",
+    "DNS",
+    "Network Security",
+    "Log Analysis",
+    "Vulnerability Assessment",
+    "Security Monitoring",
+    "Prometheus",
+    "Helm"
   ]
 }

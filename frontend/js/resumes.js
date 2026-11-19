@@ -24,26 +24,9 @@ function clearResumeMessage(id) {
   element.classList.remove("success");
 }
 
-function goToLogin() {
-  AuthStorage.clear();
-  window.location.replace("./login.html");
-}
-
 async function verifySession() {
-  if (!AuthStorage.getAccessToken()) {
-    goToLogin();
-    return false;
-  }
-
   try {
-    let user;
-
-    try {
-      user = await ICMApi.getMe();
-    } catch {
-      await ICMApi.refreshAccessToken();
-      user = await ICMApi.getMe();
-    }
+    const user = await ICMApi.getMe();
 
     document.getElementById("current-user").textContent =
       user.username || "ICM User";
@@ -52,28 +35,12 @@ async function verifySession() {
     document.getElementById("resumes-app").hidden = false;
 
     return true;
-  } catch {
-    goToLogin();
-    return false;
-  }
-}
-
-async function withTokenRetry(operation) {
-  try {
-    return await operation();
   } catch (error) {
-    // Refresh hanya untuk error HTTP 401,
-    // bukan untuk semua kesalahan request.
-    const isUnauthorized =
-      error.httpStatus === 401 ||
-      /HTTP 401/.test(error.message);
-
-    if (!isUnauthorized) {
-      throw error;
-    }
-
-    await ICMApi.refreshAccessToken();
-    return operation();
+    if (ICMApi.handleSessionError(error)) return false;
+    document.getElementById("page-loading").hidden = true;
+    document.getElementById("resumes-app").hidden = false;
+    showResumeMessage("list-message", error.message + " Muat ulang halaman untuk mencoba lagi.");
+    return false;
   }
 }
 
@@ -112,9 +79,12 @@ function createResumeItem(resume) {
 
   const detail = document.createElement("span");
 
-  const extractionStatus = resume.has_extracted_text
-    ? "Teks berhasil diekstraksi"
-    : "Teks belum tersedia";
+  const extractionStatus = {
+    text_extracted: "Teks berhasil diekstrak",
+    partial: "Pembacaan parsial — sebagian isi belum terbaca",
+    needs_review: "Hasil pembacaan perlu diperiksa",
+    failed: "Pembacaan gagal",
+  }[resume.extraction_quality?.status] || "Informasi kualitas tidak tersedia";
 
   detail.textContent =
     `${formatUploadDate(resume.uploaded_at)} · ${extractionStatus}`;
@@ -128,6 +98,7 @@ function createResumeItem(resume) {
 async function loadResumes() {
   const listElement = document.getElementById("resume-list");
 
+  if (refreshButton.disabled) return;
   refreshButton.disabled = true;
   clearResumeMessage("list-message");
 
@@ -139,9 +110,7 @@ async function loadResumes() {
   listElement.append(loading);
 
   try {
-    const result = await withTokenRetry(
-      () => ICMApi.listResumes()
-    );
+    const result = await ICMApi.listResumes();
 
     const resumes = Array.isArray(result.resumes)
       ? result.resumes
@@ -167,6 +136,7 @@ async function loadResumes() {
     });
 
   } catch (error) {
+    if (ICMApi.handleSessionError(error)) return;
     listElement.replaceChildren();
 
     showResumeMessage(
@@ -227,6 +197,7 @@ fileInput.addEventListener("change", () => {
 
 uploadForm.addEventListener("submit", async (event) => {
   event.preventDefault();
+  if (uploadButton.disabled) return;
   clearResumeMessage("upload-message");
 
   const file = fileInput.files[0];
@@ -238,13 +209,10 @@ uploadForm.addEventListener("submit", async (event) => {
     return;
   }
 
-  uploadButton.disabled = true;
-  uploadButton.textContent = "Mengunggah & mengekstraksi CV...";
+  setRequestLoading(uploadButton, true, "Mengunggah & mengekstraksi CV...");
 
   try {
-    const result = await withTokenRetry(
-      () => ICMApi.uploadResume(file)
-    );
+    const result = await ICMApi.uploadResume(file);
 
     showResumeMessage(
       "upload-message",
@@ -260,14 +228,14 @@ uploadForm.addEventListener("submit", async (event) => {
     await loadResumes();
 
   } catch (error) {
+    if (ICMApi.handleSessionError(error)) return;
     showResumeMessage(
       "upload-message",
       error.message
     );
 
   } finally {
-    uploadButton.disabled = false;
-    uploadButton.textContent = "Upload CV";
+    setRequestLoading(uploadButton, false, "Upload CV");
   }
 });
 

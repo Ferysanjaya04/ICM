@@ -22,22 +22,8 @@ function clearCareerMessage() {
   element.hidden = true;
 }
 
-function careerLoginRedirect() {
-  AuthStorage.clear();
-  window.location.replace("./login.html");
-}
-
 async function careerAuthenticatedUser() {
-  if (!AuthStorage.getAccessToken()) {
-    throw new Error("Belum login.");
-  }
-
-  try {
-    return await ICMApi.getMe();
-  } catch {
-    await ICMApi.refreshAccessToken();
-    return ICMApi.getMe();
-  }
+  return ICMApi.getMe();
 }
 
 async function initializeCareer() {
@@ -78,10 +64,7 @@ async function initializeCareer() {
     careerSelect.disabled = resumes.length === 0;
 
   } catch (error) {
-    if (!AuthStorage.getAccessToken()) {
-      careerLoginRedirect();
-      return;
-    }
+    if (ICMApi.handleSessionError(error)) return;
 
     careerMessage(`Gagal memuat CV: ${error.message}`);
 
@@ -212,8 +195,7 @@ function renderCareerRoles(data) {
     );
 
     const hasSkillRequirements =
-      role.skill_match_available !== false &&
-      role.source !== "classifier_label";
+      ICMTransparency.requirementsKnown(role);
 
     const match = hasSkillRequirements
       ? safeNumber(role.match_percentage)
@@ -228,13 +210,13 @@ function renderCareerRoles(data) {
       createElement(
         "strong",
         "career-role-score",
-        hasSkillRequirements
+        validMatch !== null
           ? formatPercent(validMatch)
-          : "Tidak tersedia"
+          : "Persyaratan belum tersedia"
       )
     );
 
-    addProgress(card, validMatch);
+    if (validMatch !== null) addProgress(card, validMatch);
     
     if (validMatch === 0) {
         card.append(
@@ -249,12 +231,13 @@ function renderCareerRoles(data) {
     }
 
 
-    if (role.salary_range) {
+    const salary = ICMTransparency.salaryLabel(role);
+    if (salary) {
       card.append(
         createElement(
           "p",
           "career-role-meta",
-          `Salary range: ${role.salary_range}`
+          salary
         )
       );
     }
@@ -273,7 +256,7 @@ function renderCareerRoles(data) {
       );
     }
 
-    if (!hasSkillRequirements) {
+    if (!hasSkillRequirements || validMatch === null) {
       card.append(
         createElement(
           "p",
@@ -284,7 +267,7 @@ function renderCareerRoles(data) {
       );
     }
 
-    if (Array.isArray(role.missing_skills) &&
+    if (hasSkillRequirements && validMatch !== null && Array.isArray(role.missing_skills) &&
         role.missing_skills.length > 0) {
       const gap = role.missing_skills.join(", ");
 
@@ -292,7 +275,7 @@ function renderCareerRoles(data) {
         createElement(
           "p",
           "career-role-note",
-          `Skill gap: ${gap}`
+          `Bukti kebutuhan skill belum terdeteksi: ${gap}. Belum terdeteksi bukan berarti tidak dikuasai.`
         )
       );
     }
@@ -415,7 +398,7 @@ function renderCareerProbabilities(data) {
 }
 
 function learningItemTitle(item, index) {
-  if (typeof item === "string") {
+  if (!item || typeof item !== "object") {
     return `Learning Step ${index + 1}`;
   }
 
@@ -481,7 +464,8 @@ function renderLearningItem(item, index) {
     possibleSteps.forEach((step) => {
       const text = typeof step === "string"
         ? step
-        : step?.title ||
+        : step?.activity ||
+          step?.title ||
           step?.name ||
           step?.skill ||
           step?.description ||
@@ -551,7 +535,18 @@ function renderCareerLearning(data) {
   }
 
   items.forEach((item, index) => {
-    container.append(renderLearningItem(item, index));
+    const roles = data.top_roles || data.top_recommendations || [];
+    const role = roles.find(role => item && typeof item === 'object' &&
+      (item.rank ? Number(role.rank) === Number(item.rank) : role.role_title === item.role_title) &&
+      (!item.role_title || role.role_title === item.role_title));
+    if (!ICMTransparency.requirementsKnown(role) || safeNumber(role.match_percentage) === null || item?.status === 'unknown_requirements') {
+      const unknown = createElement('div', 'career-learning-item');
+      unknown.append(createElement('strong', '', learningItemTitle(item, index)));
+      unknown.append(createElement('p', '', 'Persyaratan role belum tersedia atau belum terverifikasi. Learning path tidak ditampilkan.'));
+      container.append(unknown);
+    } else {
+      container.append(renderLearningItem(item, index));
+    }
   });
 }
 
@@ -578,6 +573,7 @@ function renderCareerResult(data) {
     `Rekomendasi berdasarkan ${selectedCV}.`
   );
 
+  ICMTransparency.renderQuality(document.getElementById("career-document-quality"), data, "career-role-note");
   renderCareerRoles(data);
   renderCareerSkills(data);
   renderCareerProbabilities(data);
@@ -587,13 +583,14 @@ function renderCareerResult(data) {
   section.hidden = false;
 
   section.scrollIntoView({
-    behavior: "smooth",
+    behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth",
     block: "start"
   });
 }
 
 careerForm.addEventListener("submit", async (event) => {
   event.preventDefault();
+  if (careerButton.disabled) return;
   clearCareerMessage();
 
   const resumeId = careerSelect.value;
@@ -603,8 +600,7 @@ careerForm.addEventListener("submit", async (event) => {
     return;
   }
 
-  careerButton.disabled = true;
-  careerButton.textContent = "Career AI sedang menganalisis...";
+  setRequestLoading(careerButton, true, "Career AI sedang menganalisis...");
 
   document.getElementById("career-result").hidden = true;
 
@@ -615,11 +611,11 @@ careerForm.addEventListener("submit", async (event) => {
     renderCareerResult(result);
 
   } catch (error) {
+    if (ICMApi.handleSessionError(error)) return;
     careerMessage(error.message);
 
   } finally {
-    careerButton.disabled = false;
-    careerButton.textContent = "Generate Career AI";
+    setRequestLoading(careerButton, false, "Generate Career AI");
   }
 });
 

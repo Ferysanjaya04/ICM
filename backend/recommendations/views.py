@@ -1,5 +1,6 @@
 
 import logging
+import math
 from uuid import UUID
 
 from django.db import models, transaction
@@ -143,7 +144,7 @@ class CareerRecommendationViewSet(
             ai_result = recommend_career(cv_text)
 
         except Exception:
-            logger.exception(
+            logger.error(
                 "Feature 2 mengalami error | resume_id=%s",
                 resume.id,
             )
@@ -218,6 +219,24 @@ class CareerRecommendationViewSet(
                 status.HTTP_503_SERVICE_UNAVAILABLE,
             )
 
+        for item in top_recommendations:
+            percentage = item.get("match_percentage")
+            available = item.get("skill_match_available")
+            if percentage is None:
+                valid_score = available is False
+            else:
+                valid_score = (
+                    available is not False and isinstance(percentage, (int, float))
+                    and not isinstance(percentage, bool) and math.isfinite(percentage)
+                    and 0 <= percentage <= 100
+                )
+            probability = item.get("category_probability")
+            if not valid_score or (probability is not None and (
+                not isinstance(probability, (int, float)) or not math.isfinite(probability)
+                or not 0 <= probability <= 1
+            )):
+                return error_response("Skor rekomendasi AI tidak valid.", status.HTTP_503_SERVICE_UNAVAILABLE)
+
         dominant_category = ai_result.get(
             "predicted_category"
         )
@@ -245,6 +264,10 @@ class CareerRecommendationViewSet(
                 status.HTTP_503_SERVICE_UNAVAILABLE,
             )
 
+        profile_summary = {**profile_summary,
+                           'extraction_quality': resume.extraction_quality,
+                           'input_assessment_status': resume.extraction_quality.get('assessment_status', 'limited_by_extraction')}
+
         # Pastikan model memiliki kolom learning_path.
         try:
             learning_path_field = (
@@ -253,7 +276,7 @@ class CareerRecommendationViewSet(
                 )
             )
         except Exception:
-            logger.exception(
+            logger.error(
                 "Kolom learning_path tidak ditemukan."
             )
 
@@ -324,11 +347,11 @@ class CareerRecommendationViewSet(
                         category=str(
                             item.get("category") or ""
                         ),
-                        match_percentage=(
-                            item.get(
-                                "match_percentage", 0
-                            )
-                        ),
+                        match_percentage=item.get("match_percentage"),
+                        match_details={
+                            key: value for key, value in item.items()
+                            if key not in {"role_title", "category", "rank", "salary_range", "match_percentage"}
+                        },
                         rank=item["rank"],
                         salary_range=str(
                             item.get("salary_range") or ""
@@ -336,7 +359,7 @@ class CareerRecommendationViewSet(
                     )
 
         except Exception:
-            logger.exception(
+            logger.error(
                 "Gagal menyimpan rekomendasi | resume_id=%s",
                 resume.id,
             )

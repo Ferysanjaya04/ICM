@@ -123,3 +123,17 @@ class TestAuthentication:
         assert response.status_code == 200
         assert response.data["status"] == "success"
         assert response.data["data"]["username"] == "testuser"
+    @pytest.mark.parametrize("body", [
+        {"username": "newuser", "email": "new@example.com", "password": "1"},
+        {"username": "newuser", "email": "not-an-email", "password": "StrongUnique!928"},
+        [], "invalid body", 123,
+        {"username": "bad/name", "email": "new@example.com", "password": "StrongUnique!928"},
+        {"username": "newuser", "email": "new@example.com", "password": "123456789"},
+        {"username": "newuser", "email": "new@example.com", "password": "newuser"},
+    ])
+    def test_register_rejects_invalid_input_without_creating_user(self, body):
+        before = User.objects.count()
+        response = self.client.post("/api/auth/register/", body, format="json")
+        assert response.status_code == 400
+        assert response.data["error"]["code"] == "VALIDATION_ERROR"
+        assert User.objects.count() == before

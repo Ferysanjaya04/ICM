@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -10,31 +9,21 @@
 
   <title>CV & Job Matching | ICM</title>
 
+  <link rel="stylesheet" href="./css/design-system.css">
   <link rel="stylesheet" href="./css/style.css">
   <link rel="stylesheet" href="./css/dashboard.css">
   <link rel="stylesheet" href="./css/job-match.css">
+  <link rel="stylesheet" href="./css/app.css">
 </head>
-
 <body class="dashboard-page">
 
-  <div id="page-loading" class="app-loading">
-    Memeriksa sesi ICM...
+  <div id="page-loading" class="app-loading icm-card" style="display: flex; align-items: center; justify-content: center;">
+    <span class="icm-spinner" style="margin-right: 12px;"></span> Memeriksa sesi ICM...
   </div>
 
   <div id="job-match-app" class="job-match-layout" hidden>
 
-    <header class="match-topbar">
-      <a href="./dashboard.html" class="match-logo">
-        <span>✦</span> ICM.
-      </a>
-
-      <div class="match-topbar-right">
-        <span id="current-user">ICM Member</span>
-        <a href="./dashboard.html" class="match-back">
-          ← Dashboard
-        </a>
-      </div>
-    </header>
+    <header class="app-header"><div class="app-header-inner"><a class="app-brand" href="./dashboard.html"><span class="brand-symbol" aria-hidden="true">✦</span><span>ICM<span class="brand-dot">.</span></span><span class="brand-caption">Career Intelligence</span></a><button type="button" id="menu-button" aria-expanded="false" aria-controls="sidebar" aria-label="Buka navigasi">☰</button><nav id="sidebar" class="app-navigation" aria-label="Navigasi utama"><a href="./dashboard.html" class="nav-link">Dashboard</a><a href="./job-match.html" class="nav-link" aria-current="page">AI CV & Job</a><a href="./career.html" class="nav-link">AI Resume</a><a href="./resumes.html" class="nav-link">My Resumes</a><a href="./history.html" class="nav-link">History</a><a href="./job-match.html" class="button button-primary nav-mobile-action">Analisis Baru</a><button class="nav-mobile-action" type="button" data-logout>Logout</button></nav><div class="app-actions"><span id="current-user" class="account-name">Akun</span><a href="./job-match.html" class="button button-primary">＋ Analisis Baru</a><button type="button" id="logout-button" class="account-button" aria-label="Keluar dari akun">Logout ↗</button></div></div></header><button type="button" id="sidebar-overlay" tabindex="-1" class="nav-overlay" aria-label="Tutup navigasi" hidden></button>
 
     <main class="match-container">
 
@@ -49,7 +38,7 @@
 
       <div class="match-grid">
 
-        <section class="match-panel">
+        <section class="match-panel icm-card scroll-reveal">
           <div class="match-panel-header">
             <h2>Start New Analysis</h2>
             <span class="match-tag">SentenceTransformer</span>
@@ -58,11 +47,11 @@
           <form id="match-form">
 
             <div class="match-field">
-              <label for="resume-select">
+              <label for="resume-select" class="icm-label">
                 Select Your CV
               </label>
 
-              <select id="resume-select" required>
+              <select id="resume-select" class="icm-input" required>
                 <option value="">Memuat daftar CV...</option>
               </select>
 
@@ -76,12 +65,13 @@
             </div>
 
             <div class="match-field">
-              <label for="job-text">
+              <label for="job-text" class="icm-label">
                 Job Description
               </label>
 
               <textarea
                 id="job-text"
+                class="icm-input"
                 rows="11"
                 minlength="10"
                 maxlength="30000"
@@ -109,7 +99,7 @@
             <button
               type="submit"
               id="analyze-button"
-              class="btn-primary"
+              class="icm-btn icm-btn-primary"
             >
               Analyze Compatibility
             </button>
@@ -117,7 +107,7 @@
           </form>
         </section>
 
-        <aside class="match-info-panel">
+        <aside class="match-info-panel icm-card scroll-reveal">
           <div class="match-info-icon">✧</div>
 
           <h2>How does it work?</h2>
@@ -182,9 +172,12 @@
           </div>
         </div>
 
+        <div id="match-document-quality" role="status" aria-live="polite"></div>
+        <div id="match-assessment"></div>
+
         <div class="result-summary">
 
-          <div class="match-panel score-panel">
+          <div class="match-panel score-panel icm-card scroll-reveal">
             <span class="score-label">COMPATIBILITY SCORE</span>
 
             <div class="score-circle" id="score-circle">
@@ -196,12 +189,12 @@
             </strong>
 
             <p>
-              Skor keseluruhan berdasarkan empat
-              komponen yang dilaporkan dalam metode ICM.
+              Skor heuristik dari komponen yang dapat dinilai,
+              bukan peluang diterima kerja.
             </p>
           </div>
 
-          <div class="match-panel score-details-panel">
+          <div class="match-panel score-details-panel icm-card scroll-reveal">
             <h3>Score Breakdown</h3>
 
             <div id="score-breakdown"
@@ -212,7 +205,7 @@
 
         <div class="result-details-grid">
 
-          <article class="match-panel">
+          <article class="match-panel icm-card scroll-reveal">
             <h3>Matched Skills</h3>
             <p class="result-panel-description">
               Keterampilan CV yang sesuai dengan lowongan.
@@ -220,7 +213,7 @@
             <div id="matched-skills" class="skill-list"></div>
           </article>
 
-          <article class="match-panel">
+          <article class="match-panel icm-card scroll-reveal">
             <h3>Missing Skills</h3>
             <p class="result-panel-description">
               Keterampilan yang perlu dipelajari atau
@@ -231,7 +224,7 @@
 
         </div>
 
-        <article class="match-panel recommendations-panel">
+        <article class="match-panel recommendations-panel icm-card scroll-reveal">
           <h3>AI Recommendations</h3>
           <p class="result-panel-description">
             Saran pengembangan berdasarkan hasil analisis.
@@ -244,7 +237,7 @@
           <button
             type="button"
             id="new-analysis-button"
-            class="secondary-button"
+            class="icm-btn icm-btn-secondary"
           >
             Analyze Another Job
           </button>
@@ -260,7 +253,10 @@
   </div>
 
   <script src="./js/api.js"></script>
+<script src="./js/ui.js"></script>
+  <script src="./js/transparency.js"></script>
   <script src="./js/job-match.js"></script>
+  <script src="./js/animations.js"></script>
 
 </body>
 </html>

@@ -7,7 +7,9 @@
         content="width=device-width, initial-scale=1.0">
 
   <title>Register | ICM Career Intelligence</title>
+  <link rel="stylesheet" href="./css/design-system.css">
   <link rel="stylesheet" href="./css/style.css">
+<link rel="stylesheet" href="./css/app.css">
 </head>
 
 <body class="auth-page">
@@ -15,7 +17,7 @@
 
     <section class="auth-brand">
       <div class="brand-logo">
-        <span class="brand-symbol">✦</span>
+        <span class="brand-symbol" aria-hidden="true">✦</span>
         <span>ICM<span class="brand-dot">.</span></span>
       </div>
 
@@ -60,9 +62,9 @@
     </section>
 
     <section class="auth-form-section">
-      <div class="auth-card">
+      <div class="auth-card icm-card">
 
-        <div class="mobile-logo">✦ ICM.</div>
+        <div class="mobile-logo"><span class="brand-symbol" aria-hidden="true">✦</span> <span>ICM<span class="brand-dot">.</span></span></div>
 
         <div class="auth-heading">
           <h2>Create account</h2>
@@ -73,8 +75,8 @@
 
         <form id="register-form">
 
-          <div class="form-group">
-            <label for="username">Username</label>
+          <div class="form-group mb-2">
+            <label for="username" class="icm-label">Username</label>
             <input
               type="text"
               id="username"
@@ -82,11 +84,12 @@
               placeholder="Buat username"
               autocomplete="username"
               required
+              class="icm-input"
             >
           </div>
 
-          <div class="form-group">
-            <label for="email">Email</label>
+          <div class="form-group mb-2">
+            <label for="email" class="icm-label">Email</label>
             <input
               type="email"
               id="email"
@@ -94,11 +97,12 @@
               placeholder="nama@email.com"
               autocomplete="email"
               required
+              class="icm-input"
             >
           </div>
 
-          <div class="form-group">
-            <label for="password">Password</label>
+          <div class="form-group mb-2">
+            <label for="password" class="icm-label">Password</label>
             <input
               type="password"
               id="password"
@@ -107,11 +111,12 @@
               autocomplete="new-password"
               minlength="8"
               required
+              class="icm-input"
             >
           </div>
 
-          <div class="form-group">
-            <label for="confirm-password">
+          <div class="form-group mb-2">
+            <label for="confirm-password" class="icm-label">
               Konfirmasi Password
             </label>
             <input
@@ -121,12 +126,13 @@
               placeholder="Ulangi password"
               autocomplete="new-password"
               required
+              class="icm-input"
             >
           </div>
 
           <div
             id="register-message"
-            class="form-message"
+            class="icm-message icm-message-error"
             role="alert"
             aria-live="polite"
             hidden
@@ -135,14 +141,15 @@
           <button
             type="submit"
             id="register-button"
-            class="btn-primary"
+            class="icm-btn icm-btn-primary"
+            style="width: 100%;"
           >
             Create Account
           </button>
 
         </form>
 
-        <p class="auth-switch">
+        <p class="auth-switch mt-2">
           Sudah punya akun?
           <a href="./login.html">Sign In</a>
         </p>
@@ -157,5 +164,21 @@
 
   <script src="./js/api.js"></script>
   <script src="./js/auth.js"></script>
+
+  <script>
+    // Add simple animation to form elements
+    document.addEventListener('DOMContentLoaded', function() {
+      const formElements = document.querySelectorAll('.form-group, .icm-btn');
+      formElements.forEach((el, index) => {
+        el.style.opacity = '0';
+        el.style.transform = 'translateY(10px)';
+        setTimeout(() => {
+          el.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+          el.style.opacity = '1';
+          el.style.transform = 'translateY(0)';
+        }, 100 * index);
+      });
+    });
+  </script>
 </body>
 </html>

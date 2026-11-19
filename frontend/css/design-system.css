@@ -1,0 +1,34 @@
+/* ICM shared SaaS design system: single source for tokens and primitives. */
+:root {
+ --background:#f6f8fa; --surface:#fff; --text:#25384c; --muted:#637487;
+ --border:#e1e7ed; --primary:#2c435a; --accent:#547fa5; --teal:#467f86;
+ --success:#2d7557; --warning:#946821; --error:#ab3d49;
+ --icm-navy:var(--text); --icm-teal:var(--teal); --icm-aqua:#e4f0f1;
+ --icm-gray:var(--background); --icm-white:var(--surface); --icm-black:#182532;
+ --icm-success:var(--success); --icm-warning:var(--warning); --icm-error:var(--error);
+ --font-primary:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; --font-heading:var(--font-primary);
+ --spacing-xs:.25rem; --spacing-sm:.5rem; --spacing-md:1rem; --spacing-lg:1.5rem; --spacing-xl:2rem; --spacing-xxl:3rem;
+ --radius-sm:8px; --radius-md:12px; --radius-lg:18px;
+ --shadow-sm:0 1px 3px #243a5010; --shadow-md:0 6px 24px #243a5009; --shadow-lg:0 12px 40px #243a5010;
+ --transition-fast:.15s ease; --transition-normal:.2s ease; --transition-slow:.3s ease;
+}
+*,*::before,*::after{box-sizing:border-box} body{margin:0;background:var(--background);color:var(--text);font:15px/1.65 var(--font-primary)}
+h1,h2,h3,h4,h5,h6{font-family:var(--font-heading);color:var(--text);line-height:1.25;letter-spacing:-.025em;margin:0 0 .7em} h1{font-size:clamp(28px,3vw,40px)}h2{font-size:24px}h3{font-size:19px}
+a{color:var(--teal);text-decoration:none}a:hover{text-decoration:underline}button,input,select,textarea{font:inherit}button{cursor:pointer}button:disabled{cursor:wait;opacity:.65}
+[hidden]{display:none!important}img,svg{max-width:100%}a,button,input,select,textarea,summary{touch-action:manipulation}
+:focus-visible{outline:3px solid var(--accent);outline-offset:4px}
+.icm-btn,.button{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:11px 20px;border:1px solid transparent;border-radius:10px;font-weight:650;font-size:14px;text-decoration:none;transition:background var(--transition-fast)}
+.icm-btn-primary,.button-primary{background:var(--primary);color:white}.icm-btn-primary:hover,.button-primary:hover{background:#22364a;text-decoration:none}
+.icm-btn-secondary,.button-secondary{background:white;color:var(--primary);border-color:var(--border)}
+.icm-card,.surface{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow-sm)}
+.icm-input{width:100%;padding:13px 15px;border:1px solid var(--border);border-radius:10px;background:white;color:var(--text)}.icm-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px #547fa51a}
+.icm-label{display:block;font-size:13px;font-weight:600;margin-bottom:8px}.icm-spinner{display:inline-block;width:18px;height:18px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:spin .8s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}
+.mt-2{margin-top:1rem}.text-center{text-align:center}.icm-badge{display:inline-flex;padding:5px 10px;background:#eaf0f6;border-radius:20px;color:var(--accent);font-size:12px;font-weight:600}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+
+/* Semantic feedback remains readable without relying on color alone. */
+.icm-message{padding:14px 16px;border:1px solid var(--border);border-radius:var(--radius-md);margin-bottom:16px;line-height:1.6}
+.icm-message-error{background:#fff2f0;color:var(--error);border-color:#edd3d3}
+.icm-message-success{background:#edf6ef;color:var(--success);border-color:#cde2d4}
+.icm-message-warning{background:#fff7e9;color:var(--warning);border-color:#ecdbb5}
+.icm-badge-teal{background:#e4f0f1;color:var(--teal)}

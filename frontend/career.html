@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -8,29 +7,21 @@
 
   <title>Career AI | ICM Career Intelligence</title>
 
+  <link rel="stylesheet" href="./css/design-system.css">
   <link rel="stylesheet" href="./css/style.css">
   <link rel="stylesheet" href="./css/dashboard.css">
   <link rel="stylesheet" href="./css/career.css">
+  <link rel="stylesheet" href="./css/app.css">
 </head>
-
 <body class="dashboard-page">
 
-  <div id="career-loading" class="app-loading">
-    Memeriksa sesi ICM...
+  <div id="career-loading" class="app-loading icm-card" style="display: flex; align-items: center; justify-content: center;">
+    <span class="icm-spinner" style="margin-right: 12px;"></span> Memeriksa sesi ICM...
   </div>
 
   <div id="career-app" class="career-page" hidden>
 
-    <header class="career-topbar">
-      <a href="./dashboard.html" class="career-logo">
-        <span>✦</span> ICM.
-      </a>
-
-      <div class="career-topbar-right">
-        <span id="career-user">ICM Member</span>
-        <a href="./dashboard.html">← Dashboard</a>
-      </div>
-    </header>
+    <header class="app-header"><div class="app-header-inner"><a class="app-brand" href="./dashboard.html"><span class="brand-symbol" aria-hidden="true">✦</span><span>ICM<span class="brand-dot">.</span></span><span class="brand-caption">Career Intelligence</span></a><button type="button" id="menu-button" aria-expanded="false" aria-controls="sidebar" aria-label="Buka navigasi">☰</button><nav id="sidebar" class="app-navigation" aria-label="Navigasi utama"><a href="./dashboard.html" class="nav-link">Dashboard</a><a href="./job-match.html" class="nav-link">AI CV & Job</a><a href="./career.html" class="nav-link" aria-current="page">AI Resume</a><a href="./resumes.html" class="nav-link">My Resumes</a><a href="./history.html" class="nav-link">History</a><a href="./job-match.html" class="button button-primary nav-mobile-action">Analisis Baru</a><button class="nav-mobile-action" type="button" data-logout>Logout</button></nav><div class="app-actions"><span id="career-user" class="account-name">Akun</span><a href="./job-match.html" class="button button-primary">＋ Analisis Baru</a><button type="button" id="logout-button" class="account-button" aria-label="Keluar dari akun">Logout ↗</button></div></div></header><button type="button" id="sidebar-overlay" tabindex="-1" class="nav-overlay" aria-label="Tutup navigasi" hidden></button>
 
     <main class="career-container">
 
@@ -46,7 +37,7 @@
         </p>
       </section>
 
-      <section class="career-form-panel">
+      <section class="career-form-panel icm-card scroll-reveal">
 
         <div>
           <h2>Generate Career Recommendations</h2>
@@ -59,11 +50,11 @@
           <div class="career-form-fields">
 
             <div class="career-field">
-              <label for="career-resume-select">
+              <label for="career-resume-select" class="icm-label">
                 Select Your CV
               </label>
 
-              <select id="career-resume-select" required>
+              <select id="career-resume-select" class="icm-input" required>
                 <option value="">Memuat CV...</option>
               </select>
             </div>
@@ -71,10 +62,9 @@
             <button
               type="submit"
               id="career-generate-button"
-              class="btn-primary">
+              class="icm-btn icm-btn-primary">
               Generate Career AI
             </button>
-
           </div>
         </form>
 
@@ -100,7 +90,9 @@
           </p>
         </div>
 
-        <div class="career-summary">
+        <div id="career-document-quality" role="status" aria-live="polite"></div>
+
+        <div class="career-summary icm-card scroll-reveal">
           <span>DOMINANT CAREER CATEGORY</span>
           <h3 id="dominant-category">—</h3>
           <p>
@@ -117,7 +109,7 @@
 
         <section class="career-extra-grid">
 
-          <article class="career-panel">
+          <article class="career-panel icm-card scroll-reveal">
             <h3>Detected Skills</h3>
             <p>
               Keterampilan yang terdeteksi dalam profil CV.
@@ -125,7 +117,7 @@
             <div id="career-skills" class="career-chip-list"></div>
           </article>
 
-          <article class="career-panel">
+          <article class="career-panel icm-card scroll-reveal">
             <h3>Classifier Probabilities</h3>
             <p>
               Probabilitas kategori model, berbeda
@@ -136,7 +128,7 @@
 
         </section>
 
-        <article class="career-panel career-learning">
+        <article class="career-panel career-learning icm-card scroll-reveal">
           <h3>Personalized Learning Path</h3>
           <p>
             Saran pengembangan keterampilan
@@ -162,7 +154,10 @@
   </div>
 
   <script src="./js/api.js"></script>
+<script src="./js/ui.js"></script>
+  <script src="./js/transparency.js"></script>
   <script src="./js/career.js"></script>
+  <script src="./js/animations.js"></script>
 
 </body>
 </html>

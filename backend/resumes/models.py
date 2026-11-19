@@ -36,5 +36,12 @@ class Resume(models.Model):
         auto_now_add=True
     )
 
+    @property
+    def extraction_quality(self):
+        from .extraction import unknown_extraction_quality
+        sections = self.parsed_sections if isinstance(self.parsed_sections, dict) else {}
+        quality = sections.get('extraction_quality')
+        return quality if isinstance(quality, dict) and quality else unknown_extraction_quality()
+
     def __str__(self):
         return f"{self.original_filename} ({self.uploaded_at.strftime('%Y-%m-%d')})"

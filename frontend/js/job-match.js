@@ -41,22 +41,8 @@ function clearMatchError() {
   element.hidden = true;
 }
 
-function redirectToLogin() {
-  AuthStorage.clear();
-  window.location.replace("./login.html");
-}
-
 async function getAuthenticatedUser() {
-  if (!AuthStorage.getAccessToken()) {
-    throw new Error("Belum login.");
-  }
-
-  try {
-    return await ICMApi.getMe();
-  } catch {
-    await ICMApi.refreshAccessToken();
-    return ICMApi.getMe();
-  }
+  return ICMApi.getMe();
 }
 
 async function loadResumeOptions() {
@@ -104,13 +90,7 @@ async function initializeMatchPage() {
     await loadResumeOptions();
 
   } catch (error) {
-    if (
-      !AuthStorage.getAccessToken() ||
-      error.message.includes("Sesi")
-    ) {
-      redirectToLogin();
-      return;
-    }
+    if (ICMApi.handleSessionError(error)) return;
 
     showMatchError(
       `Gagal memuat daftar CV: ${error.message}`
@@ -190,12 +170,13 @@ function createScoreRow(label, value, weight) {
   name.textContent = label;
 
   const number = document.createElement("strong");
-  number.textContent = formatPercentage(value);
+  number.textContent = value === null ? "Belum dapat dinilai" : formatPercentage(value);
 
   heading.append(name, number);
 
   const track = document.createElement("div");
   track.className = "score-track";
+  track.hidden = value === null;
 
   const fill = document.createElement("div");
   fill.className = "score-track-fill";
@@ -208,7 +189,7 @@ function createScoreRow(label, value, weight) {
 
   const weightText = document.createElement("p");
   weightText.className = "score-weight";
-  weightText.textContent = `Bobot: ${weight}%`;
+  weightText.textContent = `Bobot dasar: ${weight}%`;
 
   row.append(heading, track, weightText);
 
@@ -433,6 +414,8 @@ function renderMatchResult(data) {
     );
   }
 
+  ICMTransparency.renderQuality(document.getElementById("match-document-quality"), data);
+  ICMTransparency.renderAssessment(document.getElementById("match-assessment"), data);
   renderScores(data);
   renderSkills(data);
   renderRecommendations(data);
@@ -448,7 +431,7 @@ function renderMatchResult(data) {
 
   resultSection.hidden = false;
   resultSection.scrollIntoView({
-    behavior: "smooth",
+    behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth",
     block: "start"
   });
 }
@@ -460,6 +443,7 @@ jobTextInput.addEventListener("input", () => {
 
 matchForm.addEventListener("submit", async (event) => {
   event.preventDefault();
+  if (analyzeButton.disabled) return;
   clearMatchError();
 
   const resumeId = resumeSelect.value;
@@ -477,8 +461,7 @@ matchForm.addEventListener("submit", async (event) => {
     return;
   }
 
-  analyzeButton.disabled = true;
-  analyzeButton.textContent = "AI sedang menganalisis...";
+  setRequestLoading(analyzeButton, true, "AI sedang menganalisis...");
 
   // Hasil analisis lama disembunyikan agar tidak
   // dikira sebagai hasil dari request baru.
@@ -493,11 +476,11 @@ matchForm.addEventListener("submit", async (event) => {
     renderMatchResult(result);
 
   } catch (error) {
+    if (ICMApi.handleSessionError(error)) return;
     showMatchError(error.message);
 
   } finally {
-    analyzeButton.disabled = false;
-    analyzeButton.textContent = "Analyze Compatibility";
+    setRequestLoading(analyzeButton, false, "Analyze Compatibility");
   }
 });
 
@@ -509,7 +492,7 @@ document.getElementById("new-analysis-button")
 
     window.scrollTo({
       top: 0,
-      behavior: "smooth"
+      behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth"
     });
   });
 

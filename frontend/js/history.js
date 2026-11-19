@@ -43,22 +43,8 @@ function historyClearMessage() {
   historyMessage.hidden = true;
 }
 
-function historyLoginRedirect() {
-  AuthStorage.clear();
-  window.location.replace("./login.html");
-}
-
 async function historyGetUser() {
-  if (!AuthStorage.getAccessToken()) {
-    throw new Error("Belum login.");
-  }
-
-  try {
-    return await ICMApi.getMe();
-  } catch {
-    await ICMApi.refreshAccessToken();
-    return ICMApi.getMe();
-  }
+  return ICMApi.getMe();
 }
 
 function historyFormatDate(value) {
@@ -124,6 +110,7 @@ function historyAddChip(container, text) {
 
 function historyMatchCard(item) {
   const card = historyElement("article", "history-item");
+  if(item.id) card.dataset.analysisId = String(item.id);
   const top = historyElement("div", "history-item-top");
   const info = historyElement("div");
 
@@ -188,12 +175,24 @@ function historyMatchCard(item) {
 
   historyAddChip(meta, "Feature 1");
   card.append(meta);
+  const quality = historyElement('div');
+  ICMTransparency.renderQuality(quality, item, '', true);
+  card.append(quality);
+  const assessment = historyElement('div');
+  ICMTransparency.renderAssessment(assessment, item, '');
+  card.append(assessment);
 
+  const detail = historyElement('details');
+  detail.append(historyElement('summary', '', 'Lihat detail analisis'));
+  const fields = [['Semantic', item.semantic_score ?? item.scores?.semantic], ['Skill', item.skill_score ?? item.scores?.skill], ['Experience', item.experience_score ?? item.scores?.experience], ['Education', item.education_score ?? item.scores?.education]];
+  for (const [name, value] of fields) detail.append(historyElement('p', 'history-detail-row', `${name}: ${value === null || value === undefined ? 'Belum dapat dinilai' : historyPercent(typeof value === 'object' ? value.score : value)}`));
+  card.append(detail);
   return card;
 }
 
 function historyCareerCard(item) {
   const card = historyElement("article", "history-item");
+  if(item.id) card.dataset.analysisId = String(item.id);
   const top = historyElement("div", "history-item-top");
   const info = historyElement("div");
 
@@ -243,6 +242,23 @@ function historyCareerCard(item) {
     );
   }
 
+  const quality = historyElement('div');
+  ICMTransparency.renderQuality(quality, item, '', true);
+  card.append(quality);
+  card.append(historyElement('p', '', 'Top 3 ditampilkan sesuai urutan tersimpan; probabilitas kategori berbeda dari skill match.'));
+  for (const role of roles.slice(0, 3)) {
+    const probability = Number(role.category_probability);
+    const validProbability = role.category_probability !== null && role.category_probability !== undefined && Number.isFinite(probability) && probability >= 0 && probability <= 1;
+    const coverage = ICMTransparency.requirementsKnown(role) && role.match_percentage !== null && role.match_percentage !== undefined
+      ? historyPercent(role.match_percentage) : 'Persyaratan belum tersedia';
+    card.append(historyElement('p', '', `${role.role_title || 'Role'}: probabilitas kategori ${validProbability ? (probability * 100).toFixed(2) + '%' : 'tidak tersedia'}; skill match ${coverage}.`));
+  }
+  const detail = historyElement('details');detail.append(historyElement('summary', '', 'Lihat detail rekomendasi'));
+  for (const role of roles.slice(0,3)) {
+    const missing = Array.isArray(role.missing_skills) ? role.missing_skills : [];
+    detail.append(historyElement('p', 'history-detail-row', `${role.role_title || 'Role'} — ${ICMTransparency.requirementsKnown(role) ? (missing.length ? 'Kebutuhan belum terbukti: '+missing.join(', ') : 'Tidak ada gap tersimpan yang ditampilkan.') : 'Persyaratan belum tersedia.'}`));
+  }
+  card.append(detail);
   return card;
 }
 
@@ -308,6 +324,7 @@ function renderHistory() {
 }
 
 async function loadHistory() {
+  if (historyRefresh.disabled) return;
   historyRefresh.disabled = true;
   historyClearMessage();
 
@@ -320,6 +337,9 @@ async function loadHistory() {
       ICMApi.listCareerRecommendations()
     ]);
 
+  for (const result of [matchesResult, careersResult]) {
+    if (result.status === "rejected" && ICMApi.handleSessionError(result.reason)) return;
+  }
   if (matchesResult.status === "fulfilled") {
     historyState.matches = normalizeHistoryCollection(
       matchesResult.value,
@@ -415,10 +435,18 @@ async function initializeHistory() {
     document.getElementById("history-app").hidden = false;
 
     await loadHistory();
+    const query = new URLSearchParams(location.search);
+    if (query.get('type') === 'career') setHistoryTab('careers');
+    const selected = [...historyList.children].find(el => el.dataset.analysisId === query.get('id'));
+    if (selected) { const detail = selected.querySelector('details');if(detail)detail.open=true;selected.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth',block:'center'}); }
+
 
   } catch (error) {
     // Gagal autentikasi: jangan menampilkan data pengguna.
-    historyLoginRedirect();
+    if (ICMApi.handleSessionError(error)) return;
+    document.getElementById("history-loading").hidden = true;
+    document.getElementById("history-app").hidden = false;
+    historyShowMessage(error.message + " Muat ulang halaman untuk mencoba lagi.");
   }
 }
 
