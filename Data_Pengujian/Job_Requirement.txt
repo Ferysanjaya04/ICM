@@ -1,0 +1,18 @@
+POSISI: Junior Cybersecurity Analyst (Entry Level)
+
+Deskripsi pekerjaan
+Mendukung tim Security Operations Center (SOC) untuk memantau keamanan jaringan, melakukan triase peringatan, menganalisis log dan insiden, serta mendokumentasikan temuan keamanan.
+
+Kualifikasi
+- D3/S1 Teknik Informatika, Sistem Informasi, Keamanan Siber, atau bidang terkait. Fresh graduate atau pengalaman magang relevan dipersilakan.
+- Memahami TCP/IP, DNS, HTTP/HTTPS, firewall, VPN, dan dasar Linux.
+- Mampu menggunakan Wireshark, Nmap, dan vulnerability scanner dalam lingkungan yang diizinkan.
+- Memahami OWASP Top 10, analisis kerentanan, serta dasar penanganan insiden.
+- Memiliki dasar Python, Bash, atau PowerShell untuk otomasi sederhana.
+- Mengenal SIEM seperti Splunk atau Elastic Security, serta IDS/IPS seperti Snort atau Suricata.
+- Mampu menyusun laporan teknis dan bekerja sama dengan tim.
+
+Nilai tambah
+- Sertifikasi CompTIA Security+, CEH, atau pelatihan SOC yang relevan.
+- Pengalaman proyek pemantauan jaringan, analisis phishing, atau pengujian keamanan berizin.
+
